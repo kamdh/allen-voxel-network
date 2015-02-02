@@ -440,7 +440,8 @@ def generate_voxel_matrices(data_dir,
     # Initialize matrices:
     structures_above_threshold_ind_list=[]
     experiment_source_matrix_pre=np.zeros((len(LIMS_id_list),nsource_ipsi))
-    
+    col_label_list_source=np.zeros((nsource_ipsi,1))
+    voxel_coords_source=np.zeros((nsource_ipsi,3))
     
     # Source
     if verbose:
@@ -460,6 +461,8 @@ def generate_voxel_matrices(data_dir,
                 indices=source_ipsi_indices[struct_id]
                 experiment_source_matrix_pre[ii,indices]=pd_at_intersect
                 ipsi_injection_volume_list.append(len(intersection_mask))
+                col_label_list_source[indices]=struct_id
+                voxel_coords_source[indices,]=np.array(curr_region_mask.mask).T
         
         # Determine if current structure should be included in source list:
         ipsi_injection_volume_array=np.array(ipsi_injection_volume_list)
@@ -477,7 +480,6 @@ def generate_voxel_matrices(data_dir,
     # experiment_source_matrix=experiment_source_matrix_pre[:,structures_above_threshold_ind_list]
     experiment_source_matrix=experiment_source_matrix_pre
     row_label_list=np.array(LIMS_id_list)
-    col_label_list_source=np.array(source_id_list)[structures_above_threshold_ind_list]
      
     # Target:
     if verbose:
@@ -486,11 +488,14 @@ def generate_voxel_matrices(data_dir,
                                             ntarget_ipsi))
     experiment_target_matrix_contra=np.zeros((len(LIMS_id_list), 
                                               ntarget_contra))
+    col_label_list_target_ipsi=np.zeros((ntarget_ipsi,1))
+    col_label_list_target_contra=np.zeros((ntarget_contra,1))
+    voxel_coords_target_ipsi=np.zeros((ntarget_ipsi,3))
+    voxel_coords_target_contra=np.zeros((ntarget_contra,3))
     for jj, struct_id in enumerate(target_id_list):
         # Get the region mask:
         curr_region_mask_ipsi=region_mask_ipsi_dict[struct_id]
         curr_region_mask_contra=region_mask_contra_dict[struct_id]
-        
         for ii, curr_LIMS_id in enumerate(row_label_list):
             # Get the injection mask:
             if source_shell == True:
@@ -502,11 +507,15 @@ def generate_voxel_matrices(data_dir,
             indices_ipsi=target_ipsi_indices[struct_id]
             pd_at_diff=get_PD(curr_LIMS_id,difference_mask,curr_region_mask_ipsi)
             experiment_target_matrix_ipsi[ii, indices_ipsi]=pd_at_diff
+            col_label_list_target_ipsi[indices_ipsi]=struct_id
+            voxel_coords_target_ipsi[indices_ipsi,]=np.array(curr_region_mask_ipsi.mask).T
             # Compute integrated density, target, contra:    
             difference_mask=curr_region_mask_contra.difference(curr_experiment_mask)
             indices_contra=target_contra_indices[struct_id]
             pd_at_diff=get_PD(curr_LIMS_id,difference_mask,curr_region_mask_contra)
             experiment_target_matrix_contra[ii, indices_contra]=pd_at_diff
+            col_label_list_target_contra[indices_contra]=struct_id
+            voxel_coords_target_contra[indices_contra,]=np.array(curr_region_mask_contra.mask).T
 
     if verbose:
         print "Getting laplacians"
@@ -531,8 +540,12 @@ def generate_voxel_matrices(data_dir,
     experiment_dict['experiment_target_matrix_ipsi']=experiment_target_matrix_ipsi
     experiment_dict['experiment_target_matrix_contra']=experiment_target_matrix_contra
     experiment_dict['col_label_list_source']=col_label_list_source 
-    experiment_dict['col_label_list_target']=np.array(target_id_list)
+    experiment_dict['col_label_list_target_ipsi']=col_label_list_target_ipsi
+    experiment_dict['col_label_list_target_contra']=col_label_list_target_contra
     experiment_dict['row_label_list']=row_label_list
+    experiment_dict['voxel_coords_source']=voxel_coords_source
+    experiment_dict['voxel_coords_target_ipsi']=voxel_coords_target_ipsi
+    experiment_dict['voxel_coords_target_contra']=voxel_coords_target_contra
     if laplacian:
         experiment_dict['Lx']=Lx
         experiment_dict['Ly_ipsi']=Ly_ipsi

@@ -12,8 +12,8 @@ data_dir='../../friday_harbor/data_all'
 experiments_fn='../../mesoscale_connectivity_linear_model/data/src/LIMS_id_list.p'
 # source_acronyms=['VISp','LGd']
 # target_acronyms=['VISal', 'VISpm', 'VISam', 'VISpl']
-source_acronyms=['VISp']
-target_acronyms=['VISal','VISam','VISpm','VISpl']
+source_acronyms=['VISp','VISal','VISam','VISpm','VISpl']
+target_acronyms=['VISp','VISal','VISam','VISpm','VISpl']
 
 
 ontology=Ontology(data_dir=data_dir)
@@ -29,8 +29,10 @@ LIMS_id_list=unpickle(experiments_fn)
 experiment_dict=generate_voxel_matrices(data_dir, sources, targets,
                                         LIMS_id_list=LIMS_id_list,
                                         min_voxels_per_injection=min_vox,
-                                        laplacian=True, verbose=True,
-                                        source_shell=True)
+                                        laplacian=True,
+                                        verbose=True,
+                                        source_shell=True,
+                                        source_coverage=0.8)
 
 # Save file
 # f=h5py.File(os.path.join(save_file_name), 'w')
