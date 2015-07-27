@@ -28,6 +28,9 @@ def read_dictionary_from_group(group):
         dictionary[str(name)] = group[name].value
     return dictionary
 
+def acro_list_to_id_list(ontology, acronyms):
+    return [ontology.acronym_id_dict[name] for name in acronyms]
+
 def generate_region_matrices(data_dir,
                              source_id_list, target_id_list, 
                              min_voxels_per_injection = 50,
@@ -757,3 +760,10 @@ def generate_voxel_matrices(data_dir,
         experiment_dict['Ly_contra']=Ly_contra
     
     return experiment_dict
+
+
+def absjoin(path,*paths):
+    import os
+    return os.path.abspath(os.path.join(path,*paths))
+
+    
