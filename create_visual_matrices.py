@@ -1,5 +1,6 @@
 from friday_harbor.structure import Ontology
 from kam_interface.utilities import *
+from kam_interface.matrices import generate_voxel_matrices
 import h5py
 import os
 from IPython import embed

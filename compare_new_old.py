@@ -1,8 +1,8 @@
 import numpy as np
 from kam_interface.linear_model import LinearModel as LM
+from kam_interface.linear_model import OldLinearModel as LMold
 import kam_interface.utilities as utilities
 from scipy.io import loadmat
-from kam_interface.OldLinearModel import OldLinearModel as LMold
     
 def reorder_matrix(lm):
     row_keys=[lm.ontology.id_acronym_dict[key] for key in lm.row_labels]
