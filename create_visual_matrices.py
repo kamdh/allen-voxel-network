@@ -8,8 +8,7 @@ from scipy.io import savemat
 import numpy as np
 
 # setup the run
-#param_fn='run_setup.py'
-param_fn='run_setup_allvisnew.py'
+param_fn='run_setup.py'
 with open(param_fn) as f:
     code = compile(f.read(), param_fn, 'exec')
     exec(code)
@@ -116,17 +115,18 @@ if save_mtx:
                 mmwrite(Y_test_contra_fn,Y_test_contra_inner)
                 # setup commands to run for model selection
                 for k,lambda_val in enumerate(lambda_list):
-                    output_ipsi=absjoin(inner_dir,"W_ipsi_%f.mtx"%lambda_val)
+                    output_ipsi=absjoin(inner_dir,"W_ipsi_%1.4e.mtx"%lambda_val)
                     output_contra=absjoin(inner_dir,
-                                          "W_contra_%f.mtx"%lambda_val)
+                                          "W_contra_%1.4e.mtx"%lambda_val)
+                    lambda_str="%1.4e" % lambda_val
                     cmd=' '.join([solver,X_train_fn,Y_train_ipsi_fn,
                                   Lx_fn,Ly_ipsi_fn,
-                                  str(lambda_val),output_ipsi])
+                                  lambda_str,output_ipsi])
                     print cmd
                     fid.write(cmd+'\n')
                     cmd=' '.join([solver,X_train_fn,Y_train_contra_fn,
                                   Lx_fn,Ly_contra_fn,
-                                  str(lambda_val),output_contra])
+                                  lambda_str,output_contra])
                     print cmd
                     fid.write(cmd+'\n')
             # We will need these outer cross-validation sets and fit the

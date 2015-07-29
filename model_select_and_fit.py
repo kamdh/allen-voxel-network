@@ -45,9 +45,9 @@ for o_idx,outer_dir in enumerate(glob.glob(save_dir+'/cval*')):
         Y_test_contra=mmread(Y_test_contra_fn)
         # for each lambda, evaluate error
         for j,lambda_val in enumerate(lambda_list):
-            print '    Evaluating error for lambda=%f'%lambda_val
-            W_ipsi_fn=absjoin(inner_dir,"W_ipsi_%f.mtx"%lambda_val)
-            W_contra_fn=absjoin(inner_dir,"W_contra_%f.mtx"%lambda_val)
+            print '    Evaluating error for lambda=%1.4e'%lambda_val
+            W_ipsi_fn=absjoin(inner_dir,"W_ipsi_%1.4e.mtx"%lambda_val)
+            W_contra_fn=absjoin(inner_dir,"W_contra_%1.4e.mtx"%lambda_val)
             W_ipsi=mmread(W_ipsi_fn)
             W_contra=mmread(W_contra_fn)
             err_ipsi[i,j]=sq_error_fro(W_ipsi,X_test,Y_test_ipsi)
@@ -67,20 +67,20 @@ for o_idx,outer_dir in enumerate(glob.glob(save_dir+'/cval*')):
         lambda_opt=lambda_list[lambda_idx]
         lambda_ipsi=lambda_opt
         lambda_contra=lambda_opt
-        print 'Selected lambda (ipsi & contra)=%f' % lambda_opt
-        print 'Error=%f' % err_total_sum[lambda_idx]
+        print 'Selected lambda (ipsi & contra)=%1.4e' % lambda_opt
+        print 'Error=%1.4e' % err_total_sum[lambda_idx]
     else:
         lambda_ipsi_idx=np.argmin(err_ipsi_sum)
         lambda_contra_idx=np.argmin(err_contra_sum)
         lambda_ipsi=lambda_list[lambda_ipsi_idx]
         lambda_contra=lambda_list[lambda_contra_idx]
-        print 'Selected lambda_ipsi=%f' % lambda_ipsi
-        print 'Selected lambda_contra=%f' % lambda_contra
-        print 'Error ipsi=%f' % err_ipsi_sum[lambda_ipsi_idx]
-        print 'Error contra=%f' % err_contra_sum[lambda_contra_idx]
+        print 'Selected lambda_ipsi=%1.4e' % lambda_ipsi
+        print 'Selected lambda_contra=%1.4e' % lambda_contra
+        print 'Error ipsi=%1.4e' % err_ipsi_sum[lambda_ipsi_idx]
+        print 'Error contra=%1.4e' % err_contra_sum[lambda_contra_idx]
     print 'Setting up fit using all data...'
-    output_ipsi=absjoin(outer_dir,"W_ipsi_opt_%f.mtx"%lambda_ipsi)
-    output_contra=absjoin(outer_dir,"W_contra_opt_%f.mtx"%lambda_contra)
+    output_ipsi=absjoin(outer_dir,"W_ipsi_opt_%1.4e.mtx"%lambda_ipsi)
+    output_contra=absjoin(outer_dir,"W_contra_opt_%1.4e.mtx"%lambda_contra)
     cmd=' '.join([solver,X_train_fn,Y_train_ipsi_fn,
                   Lx_fn,Ly_ipsi_fn,str(lambda_ipsi),output_ipsi])
     print cmd
