@@ -4,6 +4,13 @@ from kam_interface.linear_model import OldLinearModel as LMold
 import kam_interface.utilities as utilities
 from scipy.io import loadmat
     
+ex_new_fn='../../data/regional_model/results/experiment_matrices.hdf5'
+ex_old_fn='../../mesoscale_connectivity_linear_model/full_matrix/results/experiment_matrices.hdf5'
+W_ipsi_old_fn='../../mesoscale_connectivity_linear_model/full_matrix/results/W_ipsi.hdf5'
+W_contra_old_fn='../../mesoscale_connectivity_linear_model/full_matrix/results/W_contra.hdf5'
+W_ipsi_new_fn='../../data/regional_model/results/W_ipsi.hdf5'
+W_contra_new_fn='../../data/regional_model/results/W_contra.hdf5'
+
 def reorder_matrix(lm):
     row_keys=[lm.ontology.id_acronym_dict[key] for key in lm.row_labels]
     row_idx=np.argsort(row_keys)
@@ -35,13 +42,6 @@ def load_ex_mat(fn):
     else:
         raise Exception('Filename %s does not exist' % fn)
     
-ex_new_fn='results/experiment_matrices.hdf5'
-ex_old_fn='../../mesoscale_connectivity_linear_model/full_matrix/results/experiment_matrices.hdf5'
-W_ipsi_old_fn='../../mesoscale_connectivity_linear_model/full_matrix/results/W_ipsi.hdf5'
-W_contra_old_fn='../../mesoscale_connectivity_linear_model/full_matrix/results/W_contra.hdf5'
-W_ipsi_new_fn='results/W_ipsi.hdf5'
-W_contra_new_fn='results/W_contra.hdf5'
-
 ## check experiment matrices
 ex_new=load_ex_mat(ex_new_fn)
 ex_old=load_ex_mat(ex_old_fn)
