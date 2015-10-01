@@ -5,8 +5,8 @@ import h5py
 
 # Settings:
 min_vox=50
-data_dir='../../friday-harbor/data_all'
-save_data_dir='./results/'
+data_dir=os.path.abspath('../../friday_harbor/data_all')
+save_data_dir=os.path.abspath('../../data/regional_model/')
 save_file_name='experiment_matrices.hdf5'
 experiments_fn='../../mesoscale_connectivity_linear_model/data/src/LIMS_id_list.p'
 structures_fn='../../mesoscale_connectivity_linear_model/data/src/structure_id_list.p'

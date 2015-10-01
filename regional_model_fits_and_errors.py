@@ -61,6 +61,7 @@ def error_MSE(resid):
 def error_RMSE(resid):
     return np.sqrt(error_MSE(resid))
 
+
 def cross_val_errors(X,Y,P_X,P_Y,P_Y_dag,err_fun):
     n_inj=X.shape[1]
     outer_sets=cross_validation.LeaveOneOut(n_inj)
@@ -94,6 +95,9 @@ def cross_val_errors(X,Y,P_X,P_Y,P_Y_dag,err_fun):
     return (err_reg,err_homog,rel_err_reg,rel_err_homog,
             GOF_reg,GOF_homog)
 
+## setup error function
+err_fun=error_MSE
+
 n_inj=experiment_source_matrix.shape[0]
 n_x=experiment_source_matrix.shape[1]
 n_y_ipsi=experiment_target_matrix_ipsi.shape[1]
@@ -103,7 +107,7 @@ R_y=len(target_acronyms)
 P_X,P_X_dag=construct_proj_op(col_label_list_source)
 P_Y_ipsi,P_Y_ipsi_dag=construct_proj_op(col_label_list_target_ipsi)
 P_Y_contra,P_Y_contra_dag=construct_proj_op(col_label_list_target_contra)
-}
+
 X=experiment_source_matrix.T
 Y_ipsi=experiment_target_matrix_ipsi.T
 Y_contra=experiment_target_matrix_contra.T
@@ -122,12 +126,6 @@ errs = pd.DataFrame(np.vstack((errs_ipsi,errs_contra)).T,
                              'err_train_contra','err_train_homog_contra'])
 
 ## evaluate voxel errors
-
-# setup some variables
-if select_one_lambda:
-    lambda_fn='lambda_opt'
-else:
-    lambda_fn='lambda_ipsi_contra_opt'
 n_lambda=len(lambda_list)
 fid=open(selected_fit_cmds,'w')
 Lx_fn=absjoin(save_dir,save_stem+'_Lx.mtx')
@@ -201,3 +199,4 @@ errs_vox=pd.DataFrame(np.vstack((err_reg_ipsi,err_ipsi,
                                'err_vox_reg_contra','err_vox_contra',
                                'rel_err_vox_reg_contra','rel_err_vox_contra'])
 all_errs=pd.concat([errs,errs_vox],axis=1)
+all_errs.to_csv(os.path.join(save_dir,save_stem + "_all_errors.csv"))

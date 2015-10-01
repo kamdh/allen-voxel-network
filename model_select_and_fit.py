@@ -15,7 +15,13 @@ def sq_error_fro(W,X,Y):
     return eval_error(W,X,Y)**2
 
 def eval_error(W,X,Y):
-    return norm(np.asarray(np.dot(W,X)-Y).ravel())
+    return norm(np.ravel(np.dot(W,X)-Y),2)
+
+def mean_sq_error_fro(W,X,Y):
+    ninj=X.shape[1]
+    return sq_error_fro(W,X,Y)/ninj
+
+loss=mean_sq_error_fro
 
 # setup some variables
 n_lambda=len(lambda_list)
@@ -45,18 +51,42 @@ for o_idx,outer_dir in enumerate(glob.glob(save_dir+'/cval*')):
         Y_test_contra=mmread(Y_test_contra_fn)
         # for each lambda, evaluate error
         for j,lambda_val in enumerate(lambda_list):
-            print '    Evaluating error for lambda=%1.4e'%lambda_val
-            W_ipsi_fn=absjoin(inner_dir,"W_ipsi_%1.4e.mtx"%lambda_val)
-            W_contra_fn=absjoin(inner_dir,"W_contra_%1.4e.mtx"%lambda_val)
-            W_ipsi=mmread(W_ipsi_fn)
-            W_contra=mmread(W_contra_fn)
-            err_ipsi[i,j]=sq_error_fro(W_ipsi,X_test,Y_test_ipsi)
-            err_contra[i,j]=sq_error_fro(W_contra,X_test,Y_test_contra)
-            print str(err_ipsi[i,j]) + ' ' + str(err_contra[i,j])
+            print '    Evaluating error for lambda=%1.4e' % lambda_val
+            W_ipsi_fn=absjoin(inner_dir,"W_ipsi_%1.4e.mtx" % lambda_val)
+            W_contra_fn=absjoin(inner_dir,"W_contra_%1.4e.mtx" % lambda_val)
+            flag_err_ipsi=False
+            flag_err_contra=False
+            try:
+                W_ipsi=mmread(W_ipsi_fn)
+            except Exception:
+                print "    Error reading %s, using checkpoint" % W_ipsi_fn
+                try:
+                    W_ipsi=mmread(W_ipsi_fn + ".CHECKPT")
+                except Exception:
+                    print "    Error reading checkpoint"
+                    flag_err_ipsi=True
+            try:
+                W_contra=mmread(W_contra_fn)
+            except Exception:
+                print "    Error reading %s, using checkpoint" % W_contra_fn
+                try:
+                    W_contra=mmread(W_contra_fn + ".CHECKPT")
+                except Exception:
+                    print "    Error reading checkpoint"
+                    flag_err_contra=True
+            if flag_err_ipsi:
+                err_ipsi[i,j]=np.nan
+            else:
+                err_ipsi[i,j]=loss(W_ipsi,X_test,Y_test_ipsi)
+            if flag_err_contra:
+                err_contra[i,j]=np.nan
+            else:
+                err_contra[i,j]=loss(W_contra,X_test,Y_test_contra)
+            print "     " + str(err_ipsi[i,j]) + ' ' + str(err_contra[i,j])
     # summarize errors by mean over inner sets
-    err_ipsi_sum=np.mean(err_ipsi,axis=0)
-    err_contra_sum=np.mean(err_contra,axis=0)
-    err_total_sum=err_ipsi_sum + err_contra_sum
+    err_ipsi_sum=np.nanmean(err_ipsi,axis=0)
+    err_contra_sum=np.nanmean(err_contra,axis=0)
+    err_total_sum=np.nansum(np.hstack((err_ipsi_sum,err_contra_sum)),axis=0)
     print 'ipsi err:  '+ str(err_ipsi_sum)
     print 'contra err:'+ str(err_contra_sum)
     print 'sums:      '+ str(err_total_sum)

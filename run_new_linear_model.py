@@ -8,8 +8,8 @@ import scipy.optimize as sopt
 # Settings:
 data_dir='../../friday-harbor/data_all'
 load_file_name = 'experiment_matrices.hdf5'
-rel_data_dir = './results'
-save_dir = './results'
+rel_data_dir = '../../data/regional_model/results'
+save_dir = rel_data_dir
 save_file_name_ipsi = 'W_ipsi.hdf5'
 save_file_name_contra = 'W_contra.hdf5'
 
