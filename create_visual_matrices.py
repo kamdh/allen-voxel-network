@@ -1,11 +1,28 @@
-from friday_harbor.structure import Ontology
-from kam_interface.utilities import *
-from kam_interface.matrices import generate_voxel_matrices
-import h5py
+from allensdk.core.mouse_connectivity_cache import MouseConnectivityCache
 import os
-from IPython import embed
+import nrrd
+from kam_interface.matrices import generate_voxel_matrices
+from kam_interface.utilities import *
 from scipy.io import savemat
-import numpy as np
+
+class MCC_fix(MouseConnectivityCache):
+     def get_structure_mask(self, structure_id, file_name=None,
+                            annotation_file_name=None):
+        file_name = self.get_cache_path(file_name, self.STRUCTURE_MASK_KEY,
+                                        structure_id)
+        if os.path.exists(file_name):
+            return nrrd.read(file_name)
+        else:
+            ont = self.get_ontology()
+            structure_ids = ont.get_descendant_ids([structure_id])
+            annotation, _ = self.get_annotation_volume(annotation_file_name)
+            mask = self.make_structure_mask(structure_ids, annotation)
+            
+            if self.cache:
+                self.safe_mkdir(os.path.dirname(file_name))
+                nrrd.write(file_name, mask)
+
+            return mask, None
 
 # setup the run
 param_fn='run_setup.py'
@@ -13,25 +30,30 @@ with open(param_fn) as f:
     code = compile(f.read(), param_fn, 'exec')
     exec(code)
 
-ontology=Ontology(data_dir=data_dir)
-sources=acro_list_to_id_list(ontology,source_acronyms)
-targets=acro_list_to_id_list(ontology,target_acronyms)
+mcc = MCC_fix(manifest_file=os.path.join(data_dir,'manifest.json'),
+              resolution=resolution)
+ontology = mcc.get_ontology()
+sources = ontology[source_acronyms]
+targets = ontology[target_acronyms]
+
 if experiments_fn is not None:
     LIMS_id_list=unpickle(experiments_fn)
 else:
     LIMS_id_list=None
-experiment_dict=generate_voxel_matrices(data_dir, sources, targets,
+
+experiment_dict=generate_voxel_matrices(mcc, sources, targets,
                                         LIMS_id_list=LIMS_id_list,
                                         min_voxels_per_injection=min_vox,
                                         laplacian=True,
                                         verbose=True,
                                         source_shell=source_shell,
                                         source_coverage=source_coverage,
-                                        fit_gaussian=fit_gaussian)
+                                        fit_gaussian=fit_gaussian,
+                                        cre=cre)
 experiment_dict['source_acro']=np.array(source_acronyms,dtype=np.object)
-experiment_dict['source_ids']=sources
+experiment_dict['source_ids']=np.array(sources.id)
 experiment_dict['target_acro']=np.array(target_acronyms,dtype=np.object)
-experiment_dict['target_ids']=targets
+experiment_dict['target_ids']=np.array(targets.id)
 # f=h5py.File(os.path.join(save_file_name), 'w')
 # write_dictionary_to_group(f, experiment_dict)
 # f.close()
@@ -50,12 +72,18 @@ if save_mtx:
     Lx=experiment_dict['Lx'].T
     Ly_ipsi=experiment_dict['Ly_ipsi'].T
     Ly_contra=experiment_dict['Ly_contra'].T
+    Omega=experiment_dict['Omega'].T
     mmwrite(os.path.join(save_dir,save_stem+'_X.mtx'),X)
     mmwrite(os.path.join(save_dir,save_stem+'_Y_ipsi.mtx'),Y_ipsi)
     mmwrite(os.path.join(save_dir,save_stem+'_Y_contra.mtx'),Y_contra)
     mmwrite(os.path.join(save_dir,save_stem+'_Lx.mtx'),Lx)
     mmwrite(os.path.join(save_dir,save_stem+'_Ly_ipsi.mtx'),Ly_ipsi)
     mmwrite(os.path.join(save_dir,save_stem+'_Ly_contra.mtx'),Ly_contra)
+    mmwrite(os.path.join(save_dir,save_stem+'_Omega.mtx'),Omega)
+    mmwrite(os.path.join(save_dir,save_stem+'_W0_ipsi.mtx'),
+            np.zeros((Y_ipsi.shape[0],X.shape[0])))
+    mmwrite(os.path.join(save_dir,save_stem+'_W0_contra.mtx'),
+            np.zeros((Y_contra.shape[0],X.shape[0])))
     if cross_val_matrices:
         from sklearn import cross_validation
         fid=open(cmdfile,'w')

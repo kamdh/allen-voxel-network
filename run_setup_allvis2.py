@@ -1,17 +1,20 @@
 import os
 import numpy as np
 
-save_stem='allvis'
+save_stem='allvis_sdk_new'
+data_dir='../../data/sdk_new'
+resolution=100
+cre=False
+source_acronyms=['VISal','VISam','VISl','VISp','VISpl','VISpm']
+
 lambda_list=np.logspace(-2,3,8)**2
 scale_lambda=True
-min_vox=5
+min_vox=10
 # save_file_name='visual_output.hdf5'
 source_coverage=0.80
 source_shell=1
 save_dir=os.path.join('../../data/connectivities',save_stem)
-data_dir='../../pull_new_data/data_all'
 experiments_fn=None
-source_acronyms=['VISal','VISam','VISl','VISp','VISpl','VISpm']
 target_acronyms=source_acronyms
 solver=os.path.abspath('../smoothness_c/solve')
 cmdfile=os.path.join(save_dir,'model_fitting_cmds')
