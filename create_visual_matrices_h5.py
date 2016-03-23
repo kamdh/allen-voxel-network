@@ -81,10 +81,10 @@ if save_mtx:
     mmwrite(Ly_ipsi_fn,Ly_ipsi)
     mmwrite(Ly_contra_fn,Ly_contra)
     mmwrite(os.path.join(save_dir,save_stem+'_Omega.h5'),Omega)
-    h5write(os.path.join(save_dir,save_stem+'_W0_ipsi.h5'),
-            np.zeros((Y_ipsi.shape[0],X.shape[0])))
-    h5write(os.path.join(save_dir,save_stem+'_W0_contra.h5'),
-            np.zeros((Y_contra.shape[0],X.shape[0])))
+    # h5write(os.path.join(save_dir,save_stem+'_W0_ipsi.h5'),
+    #         np.zeros((Y_ipsi.shape[0],X.shape[0])))
+    # h5write(os.path.join(save_dir,save_stem+'_W0_contra.h5'),
+    #         np.zeros((Y_contra.shape[0],X.shape[0])))
     if cross_val_matrices:
         from sklearn import cross_validation
         fid=open(cmdfile,'w')
