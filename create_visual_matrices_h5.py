@@ -71,16 +71,19 @@ if save_mtx:
     Ly_ipsi=experiment_dict['Ly_ipsi'].T
     Ly_contra=experiment_dict['Ly_contra'].T
     Omega=experiment_dict['Omega'].T
-    mmwrite(os.path.join(save_dir,save_stem+'_X.mtx'),X)
-    mmwrite(os.path.join(save_dir,save_stem+'_Y_ipsi.mtx'),Y_ipsi)
-    mmwrite(os.path.join(save_dir,save_stem+'_Y_contra.mtx'),Y_contra)
-    mmwrite(os.path.join(save_dir,save_stem+'_Lx.mtx'),Lx)
-    mmwrite(os.path.join(save_dir,save_stem+'_Ly_ipsi.mtx'),Ly_ipsi)
-    mmwrite(os.path.join(save_dir,save_stem+'_Ly_contra.mtx'),Ly_contra)
-    mmwrite(os.path.join(save_dir,save_stem+'_Omega.mtx'),Omega)
-    mmwrite(os.path.join(save_dir,save_stem+'_W0_ipsi.mtx'),
+    h5write(os.path.join(save_dir,save_stem+'_X.h5'),X)
+    h5write(os.path.join(save_dir,save_stem+'_Y_ipsi.h5'),Y_ipsi)
+    h5write(os.path.join(save_dir,save_stem+'_Y_contra.h5'),Y_contra)
+    Lx_fn=absjoin(save_dir,save_stem+'_Lx.mtx')
+    Ly_ipsi_fn=absjoin(save_dir,save_stem+'_Ly_ipsi.mtx')
+    Ly_contra_fn=absjoin(save_dir,save_stem+'_Ly_contra.mtx')
+    mmwrite(Lx_fn,Lx)
+    mmwrite(Ly_ipsi_fn,Ly_ipsi)
+    mmwrite(Ly_contra_fn,Ly_contra)
+    mmwrite(os.path.join(save_dir,save_stem+'_Omega.h5'),Omega)
+    h5write(os.path.join(save_dir,save_stem+'_W0_ipsi.h5'),
             np.zeros((Y_ipsi.shape[0],X.shape[0])))
-    mmwrite(os.path.join(save_dir,save_stem+'_W0_contra.mtx'),
+    h5write(os.path.join(save_dir,save_stem+'_W0_contra.h5'),
             np.zeros((Y_contra.shape[0],X.shape[0])))
     if cross_val_matrices:
         from sklearn import cross_validation
@@ -97,13 +100,12 @@ if save_mtx:
             X_test=X[:,test]
             Y_train_ipsi=Y_ipsi[:,train]
             Y_test_ipsi=Y_ipsi[:,test]
+            Omega_train = Omega[:,train]
+            Omega_test = Omega[:,test]
             Y_train_contra=Y_contra[:,train]
             Y_test_contra=Y_contra[:,test]
             # setup some directories
             outer_dir=os.path.join(save_dir,'cval%d'%i)
-            Lx_fn=absjoin(save_dir,save_stem+'_Lx.mtx')
-            Ly_ipsi_fn=absjoin(save_dir,save_stem+'_Ly_ipsi.mtx')
-            Ly_contra_fn=absjoin(save_dir,save_stem+'_Ly_contra.mtx')
             try:
                 os.mkdir(outer_dir)
             except OSError:
@@ -125,49 +127,62 @@ if save_mtx:
                 Y_test_ipsi_inner=Y_train_ipsi[:,test_inner]
                 Y_train_contra_inner=Y_train_contra[:,train_inner]
                 Y_test_contra_inner=Y_train_contra[:,test_inner]
+                Omega_train_inner = Omega_train[:,train_inner]
+                Omega_test_inner = Omega_train[:,test_inner]
                 # filenames
-                X_train_fn=absjoin(inner_dir,'X_train.mtx')
-                X_test_fn=absjoin(inner_dir,'X_test.mtx')
-                Y_train_ipsi_fn=absjoin(inner_dir,'Y_train_ipsi.mtx')
-                Y_train_contra_fn=absjoin(inner_dir,'Y_train_contra.mtx')
-                Y_test_ipsi_fn=absjoin(inner_dir,'Y_test_ipsi.mtx')
-                Y_test_contra_fn=absjoin(inner_dir,'Y_test_contra.mtx')
+                X_train_fn=absjoin(inner_dir,'X_train.h5')
+                X_test_fn=absjoin(inner_dir,'X_test.h5')
+                Y_train_ipsi_fn=absjoin(inner_dir,'Y_train_ipsi.h5')
+                Y_train_contra_fn=absjoin(inner_dir,'Y_train_contra.h5')
+                Y_test_ipsi_fn=absjoin(inner_dir,'Y_test_ipsi.h5')
+                Y_test_contra_fn=absjoin(inner_dir,'Y_test_contra.h5')
+                Omega_train_inner_fn=absjoin(inner_dir,'Omega_train.mtx')
+                Omega_test_inner_fn=absjoin(inner_dir,'Omega_test.mtx')
                 # save matrices
-                mmwrite(X_train_fn,X_train_inner)
-                mmwrite(X_test_fn,X_test_inner)
-                mmwrite(Y_train_ipsi_fn,Y_train_ipsi_inner)
-                mmwrite(Y_train_contra_fn,Y_train_contra_inner)
-                mmwrite(Y_test_ipsi_fn,Y_test_ipsi_inner)
-                mmwrite(Y_test_contra_fn,Y_test_contra_inner)
+                h5write(X_train_fn,X_train_inner)
+                h5write(X_test_fn,X_test_inner)
+                h5write(Y_train_ipsi_fn,Y_train_ipsi_inner)
+                h5write(Y_train_contra_fn,Y_train_contra_inner)
+                h5write(Y_test_ipsi_fn,Y_test_ipsi_inner)
+                h5write(Y_test_contra_fn,Y_test_contra_inner)
+                mmwrite(Omega_train_inner_fn,Omega_train_inner)
+                mmwrite(Omega_test_inner_fn,Omega_test_inner)
                 # setup commands to run for model selection
                 for k,lambda_val in enumerate(lambda_list):
-                    output_ipsi=absjoin(inner_dir,"W_ipsi_%1.4e.mtx"%lambda_val)
+                    output_ipsi=absjoin(inner_dir,"W_ipsi_%1.4e.h5"%lambda_val)
                     output_contra=absjoin(inner_dir,
-                                          "W_contra_%1.4e.mtx"%lambda_val)
+                                          "W_contra_%1.4e.h5"%lambda_val)
                     lambda_str="%1.4e" % lambda_val
-                    cmd=' '.join([solver,X_train_fn,Y_train_ipsi_fn,
-                                  Lx_fn,Ly_ipsi_fn,
-                                  lambda_str,output_ipsi])
-                    print cmd
-                    fid.write(cmd+'\n')
-                    cmd=' '.join([solver,X_train_fn,Y_train_contra_fn,
-                                  Lx_fn,Ly_contra_fn,
-                                  lambda_str,output_contra])
-                    print cmd
-                    fid.write(cmd+'\n')
+                    cmd_ipsi=' '.join([solver,'--W0_init',
+                                       Omega_train_inner_fn,
+                                       X_train_fn,Y_train_ipsi_fn,
+                                       Lx_fn,Ly_ipsi_fn,
+                                       lambda_str,output_ipsi])
+                    print cmd_ipsi
+                    fid.write(cmd_ipsi+'\n')
+                    cmd_contra=' '.join([solver,'--W0_init',
+                                         X_train_fn,Y_train_contra_fn,
+                                         Lx_fn,Ly_contra_fn,
+                                         lambda_str,output_contra])
+                    print cmd_contra
+                    fid.write(cmd_contra+'\n')
             # We will need these outer cross-validation sets and fit the
             # final model (using optimal lambda found across all inner
             # cross-val runs) to 'train' data. Then, we will test on 'test'.
-            X_train_fn=absjoin(outer_dir,'X_train.mtx')
-            X_test_fn=absjoin(outer_dir,'X_test.mtx')
-            Y_train_ipsi_fn=absjoin(outer_dir,'Y_train_ipsi.mtx')
-            Y_train_contra_fn=absjoin(outer_dir,'Y_train_contra.mtx')
-            Y_test_ipsi_fn=absjoin(outer_dir,'Y_test_ipsi.mtx')
-            Y_test_contra_fn=absjoin(outer_dir,'Y_test_contra.mtx')
-            mmwrite(X_train_fn,X_train)
-            mmwrite(X_test_fn,X_test)
-            mmwrite(Y_train_ipsi_fn,Y_train_ipsi)
-            mmwrite(Y_train_contra_fn,Y_train_contra)
-            mmwrite(Y_test_ipsi_fn,Y_test_ipsi)
-            mmwrite(Y_test_contra_fn,Y_test_contra)
+            X_train_fn=absjoin(outer_dir,'X_train.h5')
+            X_test_fn=absjoin(outer_dir,'X_test.h5')
+            Y_train_ipsi_fn=absjoin(outer_dir,'Y_train_ipsi.h5')
+            Y_train_contra_fn=absjoin(outer_dir,'Y_train_contra.h5')
+            Y_test_ipsi_fn=absjoin(outer_dir,'Y_test_ipsi.h5')
+            Y_test_contra_fn=absjoin(outer_dir,'Y_test_contra.h5')
+            Omega_train_fn=absjoin(outer_dir,'Omega_train.mtx')
+            Omega_test_fn=absjoin(outer_dir,'Omega_test.mtx')
+            h5write(X_train_fn,X_train)
+            h5write(X_test_fn,X_test)
+            h5write(Y_train_ipsi_fn,Y_train_ipsi)
+            h5write(Y_train_contra_fn,Y_train_contra)
+            h5write(Y_test_ipsi_fn,Y_test_ipsi)
+            h5write(Y_test_contra_fn,Y_test_contra)
+            mmwrite(Omega_train_fn,Omega_train)
+            mmwrite(Omega_test_fn,Omega_test)
         fid.close()

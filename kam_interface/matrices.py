@@ -151,7 +151,7 @@ def generate_voxel_matrices(mcc,
                             source_coverage          = 0.8,
                             LIMS_id_list             = None,
                             source_shell             = None,
-                            laplacian                = False,
+                            laplacian                = None,
                             verbose                  = False,
                             filter_by_ex_target      = True,
                             fit_gaussian             = False,
@@ -179,8 +179,8 @@ def generate_voxel_matrices(mcc,
     source_shell : int, default=None
       whether to use mask which draws a shell around source regions to
       account for extent of dendrites; integer sets radius in voxels
-    laplacian : bool, default=False
-      return laplacian matrices?
+    laplacian : 'boundary', 'free', or default=None
+      Return laplacian matrices? If 'boundary', honor region boundaries.
     verbose : bool, default=False
       print progress
     filter_by_ex_target : bool, default=True
@@ -210,14 +210,13 @@ def generate_voxel_matrices(mcc,
 
     if verbose:
         print "Creating experiment list"
-    if LIMS_id_list == None:
+    if LIMS_id_list is None:
         ex_list = mcc.get_experiments(dataframe=True,cre=cre,
                                       injection_structure_ids=sources.id)
         LIMS_id_list=list(ex_list['id'])
     else:
         ex_list = mcc.get_experiments(dataframe=True,cre=cre,
-                                      injection_structure_ids=sources.id,
-                                      )
+                                      injection_structure_ids=sources.id)
         ex_list=ex_list[ex_list['id'].isin(LIMS_id_list)]
         LIMS_id_list=list(ex_list['id'])
 
@@ -545,7 +544,7 @@ def generate_voxel_matrices(mcc,
     if verbose:
         print "Getting laplacians"
     # Laplacians
-    if laplacian:
+    if laplacian == 'boundary':
         Lx=sp.block_diag(tuple([region_laplacian(region_mask_ipsi_dict[region])
                           for region in sources.id]))
         Ly_ipsi=\
@@ -554,6 +553,17 @@ def generate_voxel_matrices(mcc,
         Ly_contra=\
           sp.block_diag(tuple([region_laplacian(region_mask_contra_dict[region])
                                for region in targets.id]))
+    elif laplacian == 'free':
+        #m = mask_union(*[region_mask_ipsi_dict[sid] for sid in targets.id])
+        m = np.hstack(tuple([region_mask_ipsi_dict[region]
+                             for region in sources.id]))
+        Lx = region_laplacian(m)
+        m = np.hstack(tuple([region_mask_ipsi_dict[region]
+                             for region in targets.id]))
+        Ly_ipsi = region_laplacian(m)
+        m = np.hstack(tuple([region_mask_contra_dict[region]
+                             for region in targets.id]))
+        Ly_contra = region_laplacian(m)
     Lx=sp.csc_matrix(Lx)
     Ly_ipsi=sp.csc_matrix(Ly_ipsi)
     Ly_contra=sp.csc_matrix(Ly_contra)

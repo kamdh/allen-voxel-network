@@ -21,6 +21,12 @@ def write_dictionary_to_group(group, dictionary, create_name = None):
         group[str(key)] = val
     return
 
+def h5write(fn,mat):
+    import h5py
+    with h5py.File(fn, 'w') as f:
+        f.create_dataset('dataset', data=mat)
+        f.close()
+    
 def read_dictionary_from_group(group):
     dictionary = {}
     for name in group:
