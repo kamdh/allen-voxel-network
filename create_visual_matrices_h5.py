@@ -1,28 +1,9 @@
-from allensdk.core.mouse_connectivity_cache import MouseConnectivityCache
+from allensdk.core.mouse_connectivity_cache import MouseConnectivityCache as MCC
 import os
 import nrrd
 from kam_interface.matrices import generate_voxel_matrices
 from kam_interface.utilities import *
 from scipy.io import savemat
-
-class MCC_fix(MouseConnectivityCache):
-     def get_structure_mask(self, structure_id, file_name=None,
-                            annotation_file_name=None):
-        file_name = self.get_cache_path(file_name, self.STRUCTURE_MASK_KEY,
-                                        structure_id)
-        if os.path.exists(file_name):
-            return nrrd.read(file_name)
-        else:
-            ont = self.get_ontology()
-            structure_ids = ont.get_descendant_ids([structure_id])
-            annotation, _ = self.get_annotation_volume(annotation_file_name)
-            mask = self.make_structure_mask(structure_ids, annotation)
-            
-            if self.cache:
-                self.safe_mkdir(os.path.dirname(file_name))
-                nrrd.write(file_name, mask)
-
-            return mask, None
 
 # setup the run
 param_fn='run_setup.py'
@@ -30,8 +11,8 @@ with open(param_fn) as f:
     code = compile(f.read(), param_fn, 'exec')
     exec(code)
 
-mcc = MCC_fix(manifest_file=os.path.join(data_dir,'manifest.json'),
-              resolution=resolution)
+mcc = MCC(manifest_file=os.path.join(data_dir,'manifest.json'),
+          resolution=resolution)
 ontology = mcc.get_ontology()
 sources = ontology[source_acronyms]
 targets = ontology[target_acronyms]
@@ -80,7 +61,7 @@ if save_mtx:
     mmwrite(Lx_fn,Lx)
     mmwrite(Ly_ipsi_fn,Ly_ipsi)
     mmwrite(Ly_contra_fn,Ly_contra)
-    mmwrite(os.path.join(save_dir,save_stem+'_Omega.h5'),Omega)
+    mmwrite(os.path.join(save_dir,save_stem+'_Omega.mtx'),Omega)
     # h5write(os.path.join(save_dir,save_stem+'_W0_ipsi.h5'),
     #         np.zeros((Y_ipsi.shape[0],X.shape[0])))
     # h5write(os.path.join(save_dir,save_stem+'_W0_contra.h5'),
@@ -94,7 +75,10 @@ if save_mtx:
         if cross_val=='LOO':
             outer_sets=cross_validation.LeaveOneOut(n_inj)
         else:
-            outer_sets=cross_validation.KFold(n_inj,n_folds=cross_val)
+            outer_sets=cross_validation.KFold(n_inj,
+                                              n_folds=cross_val,
+                                              shuffle=True,
+                                              random_state=shuffle_seed)
         for i,(train,test) in enumerate(outer_sets):
             X_train=X[:,train]
             X_test=X[:,test]
