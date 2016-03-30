@@ -1,1 +1,1 @@
-run_setup_allvis_sdk.py
+run_setup_allvis_sdk_free.py

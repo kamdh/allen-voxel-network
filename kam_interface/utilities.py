@@ -26,6 +26,13 @@ def h5write(fn,mat):
     with h5py.File(fn, 'w') as f:
         f.create_dataset('dataset', data=mat)
         f.close()
+
+def h5read(fn):
+    import h5py
+    with h5py.File(fn, 'r') as f:
+        data=f['dataset'][()]
+        f.close()
+        return data
     
 def read_dictionary_from_group(group):
     dictionary = {}

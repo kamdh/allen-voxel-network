@@ -17,7 +17,7 @@ Generating a voxel model
    evaluate the errors and perform model selection.
 5. Run the commands in `model_fitting_after_selection_cmds`. This will fit the
    selected models.
-6. Run `python regional_model_fits_and_voxel_errors.py`. This will both evaluate
+6. Run `python region_model_fits_and_voxel_errors.py`. This will both evaluate
    the errors of the voxel models as well as fit regional models and compare
    their errors to the voxel models.
 
