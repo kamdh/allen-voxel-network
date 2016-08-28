@@ -4,8 +4,14 @@ allen-voxel-network
 Tools for working with Allen Institute for Brain Science voxel-scale 
 connectivity data.
 
-Generating a voxel model
-------------------------
+Requirements:
+* numpy, scipy
+* h5py
+* allensdk
+* [spatial-network-regression](https://github.com/kharris/spatial-network-regression)
+
+Generating a voxel linear model
+-------------------------------
 
 1. Edit `run_setup.py`. This sets which structures will be
    included, the values of the regularization parameter, etc.
@@ -27,6 +33,12 @@ Visualizing voxel model
 1. Run `python voxel_model_visualizations.py`. This performs fake injections
    into VISp, plotting the results. Also saves volumetric data & region 
    labeled plot.
+2. You can turn the virtual injection pictures into a movie easily:
+```bash
+avconv -q 4 -r 7 -b 9600 -i int_virt_inj%d.png movie.mp4
+```
+3. You can visualize the volumetric data in VTK format (.vti files). Use
+   [Paraview](http://www.paraview.org/).
 
 #WARNING
 **The code below is currently broken and needs updating from old to new SDK**

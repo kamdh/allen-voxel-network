@@ -29,8 +29,8 @@ try:
     os.makedirs(int_plot_dir)
 except OSError: 
     pass
-fout_virt=os.path.join(int_plot_dir,'virt_0.90_gaussian_lambda100.vti')
-fout_real=os.path.join(int_plot_dir,'real_0.90_gaussian_lambda100.vti')
+fout_virt=os.path.join(int_plot_dir,'virt_0.90_gaussian_lambda100.vtk')
+fout_real=os.path.join(int_plot_dir,'real_0.90_gaussian_lambda100.vtk')
 select_injections=[74, 76, 89, 234, 236, 238]
 select_colors=["myred", "mygreen", "myblue", "myred", "mygreen","myblue"]
 
