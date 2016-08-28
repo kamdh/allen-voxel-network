@@ -5,7 +5,7 @@ Tools for working with Allen Institute for Brain Science voxel-scale
 connectivity data.
 
 Generating a voxel model
-========================
+------------------------
 
 1. Edit `run_setup.py`. This sets which structures will be
    included, the values of the regularization parameter, etc.
@@ -22,7 +22,7 @@ Generating a voxel model
    their errors to the voxel models.
 
 Visualizing voxel model
-=======================
+-----------------------
 
 1. Run `python voxel_model_visualizations.py'. This performs fake injections
    into VISp, plotting the results. Also saves volumetric data & region 
@@ -30,10 +30,11 @@ Visualizing voxel model
 
 
 
-WARNING: THE CODE BELOW IS CURRENTLY BROKEN, NEEDS UPDATING FROM OLD SDK
+#WARNING
+THE CODE BELOW IS CURRENTLY BROKEN, NEEDS UPDATING FROM OLD SDK
 
 Generating a regional model
-===========================
+---------------------------
 
 First edit the following scripts to set the data and output directories, then
 run:
