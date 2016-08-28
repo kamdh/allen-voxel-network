@@ -24,15 +24,12 @@ Generating a voxel model
 Visualizing voxel model
 -----------------------
 
-1. Run `python voxel_model_visualizations.py'. This performs fake injections
+1. Run `python voxel_model_visualizations.py`. This performs fake injections
    into VISp, plotting the results. Also saves volumetric data & region 
    labeled plot.
 
-
-
 #WARNING
 **The code below is currently broken and needs updating from old to new SDK**
-
 
 Generating a regional model
 ---------------------------
