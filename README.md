@@ -31,7 +31,8 @@ Visualizing voxel model
 
 
 #WARNING
-THE CODE BELOW IS CURRENTLY BROKEN, NEEDS UPDATING FROM OLD SDK
+**The code below is currently broken and needs updating from old to new SDK**
+
 
 Generating a regional model
 ---------------------------
