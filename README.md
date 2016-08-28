@@ -33,9 +33,8 @@ Visualizing voxel model
 1. Run `python voxel_model_visualizations.py`. This performs fake injections
    into VISp, plotting the results. Also saves volumetric data & region 
    labeled plot.
-2. You can turn the virtual injection pictures into a movie easily:```bash
-avconv -q 4 -r 7 -b 9600 -i int_virt_inj%d.png movie.mp4
-```
+2. You can turn the virtual injection pictures into a movie easily: 
+`avconv -q 4 -r 7 -b 9600 -i int_virt_inj%d.png movie.mp4`
 3. You can visualize the volumetric data in VTK format (.vti files). Use
    [Paraview](http://www.paraview.org/).
 
