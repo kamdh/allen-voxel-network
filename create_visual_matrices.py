@@ -1,4 +1,4 @@
-from allensdk.core.mouse_connectivity_cache import MouseConnectivityCache as MCC
+from allensdk.core.mouse_connectivity_cache import MouseConnectivityCache
 import os
 import nrrd
 from kam_interface.matrices import generate_voxel_matrices
@@ -11,8 +11,8 @@ with open(param_fn) as f:
     code = compile(f.read(), param_fn, 'exec')
     exec(code)
 
-mcc = MCC(manifest_file=os.path.join(data_dir,'manifest.json'),
-          resolution=resolution)
+manifest_file=os.path.join(data_dir,'manifest.json')
+mcc = MouseConnectivityCache(manifest_file, resolution=resolution)
 ontology = mcc.get_ontology()
 sources = ontology[source_acronyms]
 targets = ontology[target_acronyms]

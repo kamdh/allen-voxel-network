@@ -1,1 +1,1 @@
-run_setup_allvis_sdk_free_noshell.py
+parameter_setup/run_setup_allvis_sdk_free_noshell.py
