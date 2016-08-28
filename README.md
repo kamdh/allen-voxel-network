@@ -21,6 +21,17 @@ Generating a voxel model
    the errors of the voxel models as well as fit regional models and compare
    their errors to the voxel models.
 
+Visualizing voxel model
+=======================
+
+1. Run `python voxel_model_visualizations.py'. This performs fake injections
+   into VISp, plotting the results. Also saves volumetric data & region 
+   labeled plot.
+
+
+
+WARNING: THE CODE BELOW IS CURRENTLY BROKEN, NEEDS UPDATING FROM OLD SDK
+
 Generating a regional model
 ===========================
 
@@ -32,3 +43,4 @@ run:
 
 If you want to compare the output of this model to that from Oh et al. (2014),
 this can be accomplished with `compare_new_old.py`.
+

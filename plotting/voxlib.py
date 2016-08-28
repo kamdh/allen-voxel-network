@@ -15,6 +15,10 @@ def bounding_box(voxels):
     maxs=np.max(voxels,axis=0)
     return (mins,maxs)
 
+def centroid_of_region_2d(label_grid,region):
+    x,y=np.where(label_grid==region)
+    return (np.mean(x),np.mean(y))
+
 def gaussian_injection(center,radius):
     from scipy.ndimage.filters import gaussian_filter
     n=radius*2+1
@@ -37,7 +41,7 @@ def point_injection(center):
     return vox_filt
 
 def build_injection_vectors(voxel_coords,coord_vox_map,
-                            region_ids,inj_id,radius,stride):
+                            region_ids,inj_site_id,radius,stride):
     '''
     Tiles the injection site with virtual injections of a given radius.
 
@@ -51,7 +55,7 @@ def build_injection_vectors(voxel_coords,coord_vox_map,
         Keys are coords2str([x,y,z]), values give index of that voxel
     region_ids : ndarray (N x 1)
         Regions assigned to each voxel
-    inj_id : int
+    inj_site_id : int
         Id of region to target
     radius : int
         Radius of each injection (units: voxels)
@@ -66,10 +70,10 @@ def build_injection_vectors(voxel_coords,coord_vox_map,
         Centers of the virtual injections
     '''
 
-    index_in_source=(region_ids==inj_id)
-    min_bnd,max_bnd=bounding_box(voxel_coords[np.where(index_in_source)[0],])
+    index_in_source=(region_ids==inj_site_id)
+    min_bnd, max_bnd=bounding_box(voxel_coords[np.where(index_in_source)[0],])
     N=voxel_coords.shape[0]
-    num_est=np.round(np.prod(max_bnd-min_bnd)/radius**3.0)
+    num_est=int(np.round(np.prod(max_bnd-min_bnd)/radius**3.0))
     num=0
     Xvirt=np.zeros((N,num_est))
     inj_center=np.zeros((3,num_est))
@@ -256,12 +260,12 @@ def save_as_vtk_old(fn,Xvirt_grid,Yvirt_grid,
     #arr_num=1
     for n in range(num_virt):
         a=VTK.point_data.add_array(Xvirt_grid[:,:,:,n].ravel(order='F'))
-        VTK.point_data.get_array(a).name="%04d_inj" % n
+        VTK.point_data.get_array(a).name="%04d_Inj_#%04d" % (2*n, n)
         VTK.point_data.update()
         del a
         #arr_num+=1
         a=VTK.point_data.add_array(Yvirt_grid[:,:,:,n].ravel(order='F'))
-        VTK.point_data.get_array(a).name="%04d_proj" % n
+        VTK.point_data.get_array(a).name="%04d_Proj_#%4d" % (2*n+1, n)
         VTK.point_data.update()
         del a
         #arr_num+=1
