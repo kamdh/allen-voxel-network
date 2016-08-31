@@ -1,6 +1,6 @@
 import os
-from kam_interface.utilities import *
-from kam_interface.matrices import generate_region_matrices
+from voxnet.utilities import *
+from voxnet.matrices import generate_region_matrices
 import h5py
 
 # Settings:

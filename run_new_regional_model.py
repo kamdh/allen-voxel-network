@@ -1,8 +1,8 @@
 import numpy as np
 import os
 import h5py
-from kam_interface import utilities
-from kam_interface.linear_model import LinearModel as LM
+from voxnet import utilities
+from voxnet.linear_model import LinearModel as LM
 import scipy.optimize as sopt
 
 # Settings:

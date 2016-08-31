@@ -4,8 +4,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.stats import mode
 from matplotlib.colors import LinearSegmentedColormap,LogNorm
-from plotting.voxlib import *
-from kam_interface.utilities import h5read
+from voxnet.plotting import *
+from voxnet.utilities import h5read
 from skimage.measure import find_contours
 
 ##################

@@ -1,7 +1,7 @@
 import os
 import numpy as np
 import glob
-from kam_interface.utilities import absjoin, h5read
+from voxnet.utilities import absjoin, h5read
 from scipy.io import mmread
 from loss_fun import *
 

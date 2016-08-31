@@ -1,7 +1,7 @@
 import numpy as np
-from kam_interface.linear_model import LinearModel as LM
-from kam_interface.linear_model import OldLinearModel as LMold
-import kam_interface.utilities as utilities
+from voxnet.linear_model import LinearModel as LM
+from voxnet.linear_model import OldLinearModel as LMold
+import voxnet.utilities as utilities
 from scipy.io import loadmat
     
 ex_new_fn='../../data/regional_model/results/experiment_matrices.hdf5'

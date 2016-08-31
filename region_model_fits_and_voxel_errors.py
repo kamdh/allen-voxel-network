@@ -6,7 +6,7 @@ from scipy.io import loadmat,savemat,mmread
 from sklearn import cross_validation, metrics
 import pandas as pd
 import glob
-from kam_interface.utilities import absjoin,h5read
+from voxnet.utilities import absjoin,h5read
 from scipy.sparse import find as spfind
 
 # relative error type

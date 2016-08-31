@@ -1,8 +1,8 @@
 from allensdk.core.mouse_connectivity_cache import MouseConnectivityCache
 import os
-import nrrd
-from kam_interface.matrices import generate_voxel_matrices
-from kam_interface.utilities import *
+#import nrrd
+from voxnet.matrices import generate_voxel_matrices
+from voxnet.utilities import *
 from scipy.io import savemat
 
 # setup the run
@@ -44,6 +44,7 @@ except OSError:
     pass
 save_file_name=os.path.join(save_dir,save_stem + '.mat')
 savemat(save_file_name,experiment_dict,oned_as='column',do_compression=True)
+
 if save_mtx:
     # only save X, Y, Lx, Ly
     from scipy.io import mmwrite

@@ -1,7 +1,7 @@
 import os
 import numpy as np
 import glob
-from kam_interface.utilities import absjoin
+from voxnet.utilities import absjoin
 from scipy.io import mmread
 from scipy.linalg import norm
 from scipy.io import savemat

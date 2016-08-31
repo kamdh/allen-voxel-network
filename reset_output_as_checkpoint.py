@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 import os
 import glob
-from kam_interface.utilities import absjoin
+from voxnet.utilities import absjoin
 
 # setup the run
 param_fn='run_setup.py'
