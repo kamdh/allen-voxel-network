@@ -12,7 +12,8 @@ with open(param_fn) as f:
     exec(code)
 
 manifest_file=os.path.join(data_dir,'manifest.json')
-mcc = MouseConnectivityCache(manifest_file, resolution=resolution)
+mcc = MouseConnectivityCache(manifest_file=manifest_file,
+                             resolution=resolution)
 ontology = mcc.get_ontology()
 sources = ontology[source_acronyms]
 targets = ontology[target_acronyms]
@@ -30,7 +31,8 @@ experiment_dict=generate_voxel_matrices(mcc, sources, targets,
                                         source_shell=source_shell,
                                         source_coverage=source_coverage,
                                         fit_gaussian=fit_gaussian,
-                                        cre=cre)
+                                        cre=cre,
+                                        max_injection_volume=max_injection_volume)
 experiment_dict['source_acro']=np.array(source_acronyms,dtype=np.object)
 experiment_dict['source_ids']=np.array(sources.id)
 experiment_dict['target_acro']=np.array(target_acronyms,dtype=np.object)

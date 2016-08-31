@@ -16,7 +16,7 @@ def bounding_box(voxels):
     return (mins,maxs)
 
 def centroid_of_region_2d(label_grid,region):
-    x,y=np.where(label_grid==region)
+    y,x=np.where(label_grid==region)
     return (np.mean(x),np.mean(y))
 
 def gaussian_injection(center,radius):
@@ -260,12 +260,12 @@ def save_as_vtk_old(fn,Xvirt_grid,Yvirt_grid,
     #arr_num=1
     for n in range(num_virt):
         a=VTK.point_data.add_array(Xvirt_grid[:,:,:,n].ravel(order='F'))
-        VTK.point_data.get_array(a).name="%04d_Inj_#%04d" % (2*n, n)
+        VTK.point_data.get_array(a).name="%04d_Inj_#%d" % (2*n, n)
         VTK.point_data.update()
         del a
         #arr_num+=1
         a=VTK.point_data.add_array(Yvirt_grid[:,:,:,n].ravel(order='F'))
-        VTK.point_data.get_array(a).name="%04d_Proj_#%4d" % (2*n+1, n)
+        VTK.point_data.get_array(a).name="%04d_Proj_#%d" % (2*n+1, n)
         VTK.point_data.update()
         del a
         #arr_num+=1

@@ -16,9 +16,10 @@ inj_site='VISp' # for virtual injections
 inj_radius=1 # units of voxels
 inj_stride=2
 int_axis=1
-save_stem='allvis_sdk_free_noshell'
+#save_stem='allvis_sdk_free_noshell'
+save_stem='extra_vis_friday_harbor'
 contour_list=[425,533,402]
-lambda_str = '1.0000e+05'
+lambda_str = '1e6'
 output_dir='integrated_gaussian_%s' % lambda_str
 do_int_plots=True
 base_dir=os.path.join('../connectivities',save_stem)
@@ -51,7 +52,7 @@ X=h5read(os.path.join(base_dir, save_stem + '_X.h5'))
 Y_ipsi=h5read(os.path.join(base_dir, save_stem + '_Y_ipsi.h5'))
 #Y_ipsi=mmread(os.path.join(base_dir, save_stem + '_Y_ipsi.mtx'))
 
-W_ipsi=h5read(os.path.join(base_dir, 'W_ipsi_all_%s.h5' % lambda_str))
+W_ipsi=h5read(os.path.join(base_dir, 'W_ipsi_%s.h5' % lambda_str))
 #W_ipsi=h5read(os.path.join(base_dir, 'W_lowrank_res.h5'));
 
 print "W dims: %d x %d" % (W_ipsi.shape[0], W_ipsi.shape[1])
@@ -63,13 +64,71 @@ coord_vox_map_source=index_lookup_map(voxel_coords_source)
 coord_vox_map_target_contra=index_lookup_map(voxel_coords_target_ipsi)
 coord_vox_map_target_ipsi=index_lookup_map(voxel_coords_target_contra)
 
+## Compute region annotation
+rearrange_2d=lambda(arr): arr
+#rearrange_2d=lambda(arr): np.fliplr(arr)
+#rearrange_2d=lambda(arr): np.swapaxes(arr,0,1)
+# remap labels
+new_labels = col_label_list_source.copy()
+new_label_map = []
+for i,label in enumerate(np.unique(new_labels)):
+    new_labels[new_labels == label] = \
+      i+1
+    new_label_map.append(label)
+label_grid=map_to_regular_grid(new_labels,
+                               voxel_coords_source).squeeze()
+label_grid[label_grid==0]=np.nan
+label_grid_2d=mode(label_grid, axis=int_axis)[0].squeeze()
+label_grid_2d[label_grid_2d==0]=np.nan
+label_unique=np.unique(new_labels)
+label_grid_2d=rearrange_2d(label_grid_2d)
+
+## Compute some region contours and setup helper functions
+contours = find_contours(label_grid_2d, 385.5)
+                                       # this threshold just happens
+                                       # to work ok for visual areas
+
+def plot_region_contours():
+    '''
+    Convenience function that plots some region boundaries
+
+    '''
+    for n, contour in enumerate(contours):
+        ax.plot(contour[:, 1], contour[:, 0], linewidth=1, c='gray')
+
+def draw_region_labels():
+    '''
+    Convenience function that draws region labels
+    '''
+    for i,label in enumerate(np.unique(col_label_list_source)):
+        x,y=centroid_of_region_2d(label_grid_2d, i+1)
+        # region_name=source_acro[source_ids==label_lookup[newlab]][0][0]
+        region_name=source_acro[source_ids==label][0][0]
+        # print "%s centroid at (%d, %d)" % (region_name,x,y)
+        plt.annotate(region_name, xy=(x-1., y))
+
+## Plot region annotation
+fig,ax=plt.subplots()
+ax.imshow(label_grid_2d,
+          cmap=plt.get_cmap('Accent'),
+          interpolation='none')
+plt.hold(True)
+draw_region_labels()
+plt.tick_params(axis='both', which='both', bottom='off',
+                top='off', labelbottom='off', right='off',
+                left='off', labelleft='off')
+plt.xlabel('center - right', fontsize=24)
+plt.ylabel('posterior - anterior', fontsize=24)
+plt.savefig(os.path.join(int_plot_dir,"region_names.png"))
+plt.close()
+
 ## Build virtual injections
 Xvirt,inj_centers=build_injection_vectors(voxel_coords_source,
-                              coord_vox_map_source,
-                              col_label_list_source,
-                              inj_site_id,
-                              inj_radius,
-                              inj_stride)
+                                          coord_vox_map_source,
+                                          col_label_list_source,
+                                          inj_site_id,
+                                          inj_radius,
+                                          inj_stride)
 num_virt=Xvirt.shape[1]
 if num_virt < 1:
     raise Exception("No virtual injections fit!")
@@ -93,53 +152,6 @@ save_as_vtk_old(fout_real,Xreal_grid,Yreal_ipsi_grid,
                 voxel_coords_source,voxel_coords_target_ipsi)
 print "VTKs saved."
 
-## Compute region annotation
-
-rearrange_2d=lambda(arr): arr
-#rearrange_2d=lambda(arr): np.fliplr(arr)
-#rearrange_2d=lambda(arr): np.swapaxes(arr,0,1)
-label_grid=map_to_regular_grid(col_label_list_source,
-                               voxel_coords_source).squeeze()
-label_grid[label_grid==0]=np.nan
-label_grid_2d=mode(label_grid, axis=int_axis)[0].squeeze()
-label_grid_2d[label_grid_2d==0]=np.nan
-label_unique=np.unique(col_label_list_source)
-label_grid_2d=rearrange_2d(label_grid_2d)
-
-## Compute some region contours and setup helper functions
-contours = find_contours(label_grid_2d, 385.5)
-                                       # this threshold just happens
-                                       # to work ok for visual areas
-
-def plot_region_contours():
-    '''
-    Convenience function that plots some region boundaries
-
-    '''
-    for n, contour in enumerate(contours):
-        ax.plot(contour[:, 1], contour[:, 0], linewidth=1, c='gray')
-
-def draw_region_labels():
-    for label in label_unique:
-        x,y=centroid_of_region_2d(label_grid_2d,label)
-        # region_name=source_acro[source_ids==label_lookup[newlab]][0][0]
-        region_name=source_acro[source_ids==label][0][0]
-        # print "%s centroid at (%d, %d)" % (region_name,x,y)
-        plt.annotate(region_name ,xy=(y,x))
-
-## Plot region annotation
-fig,ax=plt.subplots()
-ax.imshow(label_grid_2d,
-           cmap=plt.get_cmap('Accent'),interpolation='none')
-plt.hold(True)
-draw_region_labels()
-plt.tick_params(axis='both', which='both', bottom='off',
-                top='off', labelbottom='off', right='off',
-                left='off', labelleft='off')
-plt.xlabel('center - right', fontsize=24)
-plt.ylabel('posterior - anterior', fontsize=24)
-plt.savefig(os.path.join(int_plot_dir,"region_names.png"))
-plt.close()
 
 
 ## Plot virtual injections
