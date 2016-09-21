@@ -5,9 +5,12 @@ Tools for working with Allen Institute for Brain Science voxel-scale
 connectivity data.
 
 Requirements:
-* numpy, scipy
+* numpy
+* scipy
 * h5py
 * allensdk
+
+To fit connectomes:
 * [spatial-network-regression](https://github.com/kharris/spatial-network-regression)
 
 Generating a voxel linear model

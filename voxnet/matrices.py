@@ -179,6 +179,104 @@ def generate_voxel_matrices(mcc,
         'col_label_list_source', 'col_label_list_target', 'row_label_list',
         'source_laplacian', 'target_laplacian' (if laplacian==True)
     '''
+
+    def integrate_in_mask(data, query_mask):
+        '''
+        Integrate a data within a certain query mask.
+        Deals with error codes appropriately.
+
+        Parameters
+        ----------
+        data : 3-array of values
+        query_mask : mask over which to integrate (xs, ys, zs)
+
+        Returns
+        -------
+        sum : integral of data within query_mask
+        '''
+        def safe_sum(values):
+            sum = 0.0
+            for val in values:
+                if val == -1:
+                    val=0.0
+                elif val == -2:
+                    warnings.warn("data error -2, missing tile in LIMS experiment %d" % curr_LIMS_id)
+                    val = 0.0
+                elif val == -3:
+                    warnings.warn("data error -3, no data in LIMS experiment %d" % curr_LIMS_id)
+                    val = 0.0
+                sum += val
+            return sum
+        if mask_len(query_mask) > 0:
+            curr_sum = safe_sum(data[query_mask])
+        else:
+            curr_sum = 0.0
+        return curr_sum
+    
+    def data_in_mask_and_region(data, query_mask, region_mask):
+        '''
+        Returns the data within a given mask and region.
+        Maps the voxel data from a 3d array into a vector.
+        Deals with error codes appropriately.
+
+        Parameters
+        ----------
+        data : 3-array of values
+        query_mask : mask over which to integrate (xs, ys, zs)
+
+        '''
+        nvox = mask_len(region_mask)
+        if mask_len(query_mask)>0:
+            raw_pd = data[region_mask]
+            irrelevant_indices = np.ones((nvox,))
+            list_relevant = zip(*query_mask)
+            list_region = zip(*region_mask)
+            for ii,el in enumerate(list_region):
+                if el in list_relevant:
+                    irrelevant_indices[ii] = 0
+            raw_pd[irrelevant_indices==1] = 0.0
+            errmask = (raw_pd == -1)
+            if np.count_nonzero(errmask) > 0:
+                raw_pd[errmask] = 0.0
+            errmask = (raw_pd == -2)
+            if np.count_nonzero(errmask) > 0: 
+                warnings.warn("data error -2, missing tile in LIMS experiment %d" % curr_LIMS_id)
+                raw_pd[errmask] = 0.0
+            errmask = (raw_pd == -3)
+            if np.count_nonzero(errmask) > 0: 
+                warnings.warn("data error -3, no data in LIMS experiment %d" % curr_LIMS_id)
+                raw_pd[errmask] = 0.0
+        else:
+            raw_pd = np.zeros((nvox,))
+        return raw_pd
+
+    def construct_Omega(injection_mask, region_mask):
+        '''
+        Construct the Omega matrix entries for a given injection and region.
+
+        Parameters
+        ----------
+        injection_mask
+        region_mask
+
+        Returns
+        -------
+        omega : vector, same number of voxels as region_mask 
+        '''
+        nvox = mask_len(region_mask)
+        if mask_len(injection_mask) > 0:
+            omega = np.ones((nvox,))
+            irrelevant_indices = np.ones((nvox,))
+            list_relevant = zip(*injection_mask)
+            list_region = zip(*region_mask)
+            for ii,el in enumerate(list_region):
+                if el in list_relevant:
+                    irrelevant_indices[ii] = 0
+            omega[irrelevant_indices == 1] = 0.0
+        else:
+            omega=np.zeros((nvox,))
+        return omega
+
     import scipy.sparse as sp
     import warnings
 
@@ -224,31 +322,26 @@ def generate_voxel_matrices(mcc,
     
     # Get the injection masks
     if verbose:
-        print "Getting injection masks"
+        print "Getting projection densitiess"
     ProjD_dict={eid: mcc.get_projection_density(eid) for eid in ex_list.id}
+    if verbose:
+        print "Getting injection densities"
     InjD_dict={eid: mcc.get_injection_density(eid) for eid in ex_list.id}
-    data_mask_dict={eid: mcc.get_data_mask(eid) for eid in ex_list.id}
+    if verbose:
+        print "Computing injection masks from injection_fraction and data_mask"
     injection_mask_dict={eid:
-                          np.where(np.logical_and(InjD_dict[eid][0] > epsilon,
-                                   data_mask_dict[eid][0]))
-                          for eid in ex_list.id}
+        np.where(np.logical_and(mcc.get_injection_fraction(eid)[0] > epsilon,
+                                mcc.get_data_mask(eid)[0]))
+                         for eid in ex_list.id}
     
     if source_shell is not None:
         injection_mask_dict_shell=\
-          {eid: shell_mask(injection_mask_dict[eid],radius=source_shell)
+          {eid: shell_mask(injection_mask_dict[eid], radius=source_shell)
            for eid in ex_list.id}
-        # Omega_mask_dict={eid:
-        #                  mask_union(injection_mask_dict_shell[eid],
-        #                       np.where(np.logical_not(data_mask_dict[eid][0])))
-        #                  for eid in ex_list.id}
         Omega_mask_dict = injection_mask_dict_shell
     else:
         injection_mask_dict_shell={}
-        # Omega_mask_dict={eid:
-        #                  mask_union(injection_mask_dict[eid],
-        #                       np.where(np.logical_not(data_mask_dict[eid][0])))
-        #                  for eid in ex_list.id}
-        Omega_mask_dict=injection_mask_dict
+        Omega_mask_dict = injection_mask_dict
     coord_sizes=InjD_dict[ex_list.iloc[0].id][0].shape
     midline_coord=coord_sizes[2]/2
     
@@ -263,7 +356,7 @@ def generate_voxel_matrices(mcc,
     region_ipsi_nvox={}
     region_contra_nvox={}
     nsource=0 # total voxels in sources
-    nsource_ipsi=0
+    nsource_ipsi=0 
     ntarget_ipsi=0 # total voxels in ipsi targets
     ntarget_contra=0 # total voxels in contra targets
     source_indices={}
@@ -309,85 +402,28 @@ def generate_voxel_matrices(mcc,
         ntarget_ipsi+=region_ipsi_nvox[struct_id]
         ntarget_contra+=region_contra_nvox[struct_id]
 
-    def get_integrated_PD(density_dict,curr_LIMS_id,intersection_mask):
-        def safe_sum(values):
-            sum=0.0
-            for val in values:
-                if val == -1:
-                    val=0.0
-                elif val == -2:
-                    warnings.warn("projection density error -2, missing tile in LIMS experiment %d" % curr_LIMS_id)
-                    val=0.0
-                elif val == -3:
-                    warnings.warn("projection density error -3, no data in LIMS experiment %d" % curr_LIMS_id)
-                    val=0.0
-                sum+=val
-            return sum
-        if mask_len(intersection_mask) > 0:
-            curr_sum=safe_sum(
-                density_dict[curr_LIMS_id][0][intersection_mask])
-        else:
-            curr_sum=0.0
-        return curr_sum
-    
-    def get_PD(density_dict,curr_LIMS_id, relevant_mask, region_mask):
-        nvox=mask_len(region_mask)
-        if mask_len(relevant_mask)>0:
-            raw_pd=density_dict[curr_LIMS_id][0][region_mask]
-            irrelevant_indices=np.ones((nvox,))
-            list_relevant=zip(*relevant_mask)
-            list_region=zip(*region_mask)
-            for ii,el in enumerate(list_region):
-                if el in list_relevant:
-                    irrelevant_indices[ii]=0
-            raw_pd[irrelevant_indices==1]=0.0
-            errmask=raw_pd==-1
-            if np.count_nonzero(errmask) > 0:
-                raw_pd[errmask]=0.0
-            errmask=raw_pd==-2
-            if np.count_nonzero(errmask) > 0: 
-                warnings.warn("projection density error -2, missing tile in LIMS experiment %d" \
-                              % curr_LIMS_id)
-                raw_pd[errmask]=0.0
-            errmask=raw_pd==-3
-            if np.count_nonzero(errmask) > 0: 
-                warnings.warn("projection density error -3, no data in LIMS experiment %d" \
-                              % curr_LIMS_id)
-                raw_pd[errmask]=0.0
-        else:
-            raw_pd=np.zeros((nvox,))
-        return raw_pd
-
-    def construct_Omega(relevant_mask, region_mask):
-        nvox=mask_len(region_mask)
-        if mask_len(relevant_mask)>0:
-            raw_pd=np.ones((nvox,))
-            irrelevant_indices=np.ones((nvox,))
-            list_relevant=zip(*relevant_mask)
-            list_region=zip(*region_mask)
-            for ii,el in enumerate(list_region):
-                if el in list_relevant:
-                    irrelevant_indices[ii]=0
-            raw_pd[irrelevant_indices==1]=0.0
-        else:
-            raw_pd=np.zeros((nvox,))
-        return raw_pd
-
     # Check for injection mask leaking into other region,
     # restrict to experiments w/o much leakage
     #
     # Also check for too large injection volume.
-    union_of_source_masks=mask_union(*[region_mask_dict[sid]
-                                       for sid in sources.id])
-    LIMS_id_list_new=[]
+    union_of_source_masks=mask_union(*[ region_mask_dict[sid]
+                                        for sid in sources.id ])
+    LIMS_id_list_new = []
+    inj_vols = []
     for LIMS_id in LIMS_id_list:
-        inj_mask=injection_mask_dict[LIMS_id]
-        total_pd=get_integrated_PD(ProjD_dict, LIMS_id, inj_mask)
-        total_source_pd=\
-          get_integrated_PD(ProjD_dict, LIMS_id,
-                            mask_intersection(inj_mask,union_of_source_masks))
-        source_frac=total_source_pd/total_pd
+        inj_mask = injection_mask_dict[LIMS_id]
+        # total_pd = integrate_in_mask(ProjD_dict[LIMS_id][0], inj_mask)
+        total_pd = integrate_in_mask(mcc.get_injection_fraction(LIMS_id)[0],
+                                     inj_mask)
+        # total_source_pd = \
+        #   integrate_in_mask(ProjD_dict[LIMS_id][0],
+        #                     mask_intersection(inj_mask, union_of_source_masks))
+        total_source_pd = \
+          integrate_in_mask(mcc.get_injection_fraction(LIMS_id)[0],
+                            mask_intersection(inj_mask, union_of_source_masks))
+        source_frac = total_source_pd / total_pd
         injection_volume = total_pd * volume_per_voxel
+        inj_vols.append(injection_volume)
         print "  Analyzing experiment %d" % LIMS_id
         print "    source_frac = %f" % source_frac
         print "    injection volume = %f" % injection_volume
@@ -405,7 +441,9 @@ def generate_voxel_matrices(mcc,
                 del injection_mask_dict_shell[LIMS_id]
         else:
             LIMS_id_list_new.append(LIMS_id)
-    LIMS_id_list=LIMS_id_list_new
+    inj_vols.sort()
+    print "injection volumes: " + str(inj_vols)
+    LIMS_id_list = LIMS_id_list_new
     del LIMS_id_list_new
     num_experiments = len(LIMS_id_list)
     print "Found %d experiments in region" % num_experiments
@@ -463,15 +501,15 @@ def generate_voxel_matrices(mcc,
                                                 curr_region_mask)
             if mask_len(intersection_mask)>0:
                 if fit_gaussian:
-                    pd_at_intersect=get_PD(InjD_dict_gaussian,
-                                           curr_LIMS_id,
-                                           intersection_mask,
-                                           curr_region_mask)
+                    pd_at_intersect=data_in_mask_and_region(
+                        InjD_dict_gaussian[curr_LIMS_id][0],
+                        intersection_mask,
+                        curr_region_mask)
                 else:
-                    pd_at_intersect=get_PD(InjD_dict,
-                                           curr_LIMS_id,
-                                           intersection_mask,
-                                           curr_region_mask)
+                    pd_at_intersect=data_in_mask_and_region(
+                        InjD_dict[curr_LIMS_id][0],
+                        intersection_mask,
+                        curr_region_mask)
                 indices=source_ipsi_indices[struct_id]
                 ipsi_injection_volume_list.append(mask_len(intersection_mask))
                 col_label_list_source[indices]=struct_id
@@ -526,8 +564,9 @@ def generate_voxel_matrices(mcc,
             difference_mask=\
               mask_difference(curr_region_mask_ipsi,curr_experiment_mask)
             indices_ipsi=target_ipsi_indices[struct_id]
-            pd_at_diff=get_PD(ProjD_dict,curr_LIMS_id,
-                              difference_mask,curr_region_mask_ipsi)
+            pd_at_diff = data_in_mask_and_region(ProjD_dict[curr_LIMS_id][0],
+                                                difference_mask,
+                                                curr_region_mask_ipsi)
             experiment_target_matrix_ipsi[ii, indices_ipsi]=pd_at_diff
             col_label_list_target_ipsi[indices_ipsi]=struct_id
             voxel_coords_target_ipsi[indices_ipsi,]=\
@@ -536,8 +575,9 @@ def generate_voxel_matrices(mcc,
             difference_mask=\
               mask_difference(curr_region_mask_contra,curr_experiment_mask)
             indices_contra=target_contra_indices[struct_id]
-            pd_at_diff=get_PD(ProjD_dict,curr_LIMS_id,difference_mask,
-                              curr_region_mask_contra)
+            pd_at_diff = data_in_mask_and_region(ProjD_dict[curr_LIMS_id][0],
+                                                 difference_mask,
+                                                 curr_region_mask_contra)
             experiment_target_matrix_contra[ii, indices_contra]=pd_at_diff
             col_label_list_target_contra[indices_contra]=struct_id
             voxel_coords_target_contra[indices_contra,]=\
@@ -658,7 +698,7 @@ def generate_region_matrices(data_dir,
         region_mask_ipsi_dict[curr_structure_id]=ontology.get_mask_from_id_right_hemisphere_nonzero(curr_structure_id)
         region_mask_contra_dict[curr_structure_id]=ontology.get_mask_from_id_left_hemisphere_nonzero(curr_structure_id)
 
-    def get_integrated_PD(curr_LIMS_id, intersection_mask):
+    def integrate_in_mask(curr_LIMS_id, intersection_mask):
         def safe_sum(values):
             sum=0.0
             for val in values:
@@ -697,7 +737,7 @@ def generate_region_matrices(data_dir,
             curr_experiment_mask=injection_mask_dict[curr_LIMS_id]
             # Compute integrated density, source:
             intersection_mask=Mask.intersection(curr_experiment_mask, curr_region_mask)
-            experiment_source_matrix_pre[ii, jj]=get_integrated_PD(curr_LIMS_id, intersection_mask)
+            experiment_source_matrix_pre[ii, jj]=integrate_in_mask(curr_LIMS_id, intersection_mask)
             ipsi_injection_volume_list.append(len(intersection_mask)) 
     
         # Determine if current structure should be included in source list:
@@ -738,12 +778,12 @@ def generate_region_matrices(data_dir,
                 curr_experiment_mask=injection_mask_dict[curr_LIMS_id]
             # Compute integrated density, target, ipsi:
             difference_mask=curr_region_mask_ipsi.difference(curr_experiment_mask)
-            experiment_target_matrix_ipsi[ii, jj]=get_integrated_PD(curr_LIMS_id, 
+            experiment_target_matrix_ipsi[ii, jj]=integrate_in_mask(curr_LIMS_id, 
                                                                     difference_mask)
             
             # Compute integrated density, target, contra:    
             difference_mask=curr_region_mask_contra.difference(curr_experiment_mask)
-            experiment_target_matrix_contra[ii, jj]=get_integrated_PD(curr_LIMS_id, difference_mask) 
+            experiment_target_matrix_contra[ii, jj]=integrate_in_mask(curr_LIMS_id, difference_mask) 
 
     # Include only structures with sufficient injection information, and 
     # experiments with one nonzero entry in row:
