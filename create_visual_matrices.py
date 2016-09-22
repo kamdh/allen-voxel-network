@@ -23,6 +23,12 @@ if experiments_fn is not None:
 else:
     LIMS_id_list=None
 
+try:
+    if max_injection_volume:
+        pass
+except NameError:
+    max_injection_volume=np.inf
+
 experiment_dict=generate_voxel_matrices(mcc, sources, targets,
                                         LIMS_id_list=LIMS_id_list,
                                         min_voxels_per_injection=min_vox,

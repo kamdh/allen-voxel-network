@@ -1,7 +1,7 @@
 import os
 import numpy as np
 
-save_stem='allvis_sdk_free_noshell'
+save_stem='allvis_sdk_free_noshell_test'
 data_dir='../../data/sdk_new_100'
 resolution=100
 cre=False
