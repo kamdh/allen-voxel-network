@@ -321,15 +321,51 @@ def generate_voxel_matrices(mcc,
             mask_nz = np.where(mask[0])
             idx = (mask_nz[2] < midline_coord)
             return (mask_nz[0][idx], mask_nz[1][idx], mask_nz[2][idx])
+
+    def get_injection_mask_nz(expt_id, threshold=0.,
+                              valid=True, shell=None):
+        '''
+        Custom method to get injection masks. Can ensure that the data are
+        valid, as well as build a shell around injection site.
+
+        Parameters
+        ----------
+        expt_id : int
+          Experiment id
+
+        threshold : float (default = 0)
+          Threshold for injection fraction to be included
+
+        valid : bool (default = True)
+          Only return the valid data region
+
+        shell : int (default = None)
+          Expand the mask by a shell of this many voxels
+
+        Returns
+        -------
+        mask_nz : tuple
+          Tuple of (x,y,z) coordinates belonging to injection site
+        '''
+        inj_frac = mcc.get_injection_fraction(expt_id)
+        if valid:
+            data_mask = mcc.get_data_mask(expt_id)
+            mask_nz = np.where(
+                np.logical_and(inj_frac[0] > threshold,
+                               data_mask[0])
+                )
+        else:
+            mask_nz = np.where(inj_frac[0] > threshold)
+        if shell is not None:
+            mask_nz = shell_mask(mask_nz, radius=shell)
+        return mask_nz
+
+    mask_len = lambda mask: len(mask[0])
     
     assert isinstance(source_shell, int) or (source_shell is None),\
       "source_shell should be int or None"
 
-    if verbose:
-        print "Creating ExperimentManager and Ontology objects"
-
     ontology = mcc.get_ontology()
-
     volume_per_voxel = float(mcc.resolution)**3 * 1e-9
 
     if verbose:
@@ -343,46 +379,6 @@ def generate_voxel_matrices(mcc,
                                       injection_structure_ids=sources.id)
         ex_list=ex_list[ex_list['id'].isin(LIMS_id_list)]
         LIMS_id_list=list(ex_list['id'])
-
-    # # Determine which experiments should be included:
-    # if filter_by_ex_target:
-    #     LIMS_id_list_new=[]
-    #     ex_list_new=[]
-    #     for ii,e in enumerate(ex_list):
-    #         # Is the experiment target in one of the source region?
-    #         # Note: does not check for leakage into other regions
-    #         if e.structure_id in sources:
-    #             LIMS_id_list_new.append(LIMS_id_list[ii])
-    #             ex_list_new.append(e)
-    #     LIMS_id_list=LIMS_id_list_new
-    #     ex_list=ex_list_new
-    #     del LIMS_id_list_new
-    #     del ex_list_new
-
-    mask_len = lambda mask: len(mask[0])
-    
-    # Get the injection masks
-    # if verbose:
-    #     print "Getting projection densitiess"
-    # ProjD_dict={eid: mcc.get_projection_density(eid) for eid in ex_list.id}
-    # if verbose:
-    #     print "Getting injection densities"
-    # InjD_dict={eid: mcc.get_injection_density(eid) for eid in ex_list.id}
-    if verbose:
-        print "Computing injection masks from injection_fraction and data_mask"
-    injection_mask_dict={eid:
-        np.where(np.logical_and(mcc.get_injection_fraction(eid)[0] > epsilon,
-                                mcc.get_data_mask(eid)[0]))
-                         for eid in ex_list.id}
-    
-    if source_shell is not None:
-        injection_mask_dict_shell = \
-          {eid: shell_mask(injection_mask_dict[eid], radius=source_shell)
-           for eid in ex_list.id}
-        Omega_mask_dict = injection_mask_dict_shell
-    else:
-        injection_mask_dict_shell={}
-        Omega_mask_dict = injection_mask_dict
 
     # Get the region masks
     if verbose:
@@ -402,19 +398,6 @@ def generate_voxel_matrices(mcc,
     target_ipsi_indices = {}
     target_contra_indices = {}
     for struct_id in sources.id:
-        # region_mask = get_structure_mask_nz(struct_id)
-        # region_mask_ipsi_dict[struct_id] = get_structure_mask_nz(struct_id,
-        #                                                          ipsi=True)
-        # region_mask_contra_dict[struct_id] = get_structure_mask_nz(struct_id,
-        #                                                            contra=True)
-        #region_mask = np.where(mcc.get_structure_mask(struct_id)[0])
-        # region_mask_dict[struct_id] = region_mask
-        # idx = (region_mask[2] >= midline_coord)
-        # region_mask_ipsi_dict[struct_id] = \
-        #   (region_mask[0][idx], region_mask[1][idx], region_mask[2][idx])
-        # idx = (region_mask[2] < midline_coord)
-        # region_mask_contra_dict[struct_id] = \
-        #   (region_mask[0][idx], region_mask[1][idx], region_mask[2][idx])
         region_nvox[struct_id] = mask_len(get_structure_mask_nz(struct_id))
         region_ipsi_nvox[struct_id] = \
           mask_len(get_structure_mask_nz(struct_id, ipsi=True))
@@ -427,19 +410,6 @@ def generate_voxel_matrices(mcc,
         nsource += region_nvox[struct_id]
         nsource_ipsi += region_ipsi_nvox[struct_id]
     for struct_id in targets.id:
-        # region_mask = get_structure_mask_nz(struct_id)
-        # region_mask_ipsi_dict[struct_id] = get_structure_mask_nz(struct_id,
-        #                                                          ipsi=True)
-        # region_mask_contra_dict[struct_id] = get_structure_mask_nz(struct_id,
-        #                                                            contra=True)
-        # region_mask = np.where(mcc.get_structure_mask(struct_id)[0])
-        # # region_mask_dict[struct_id] = region_mask
-        # idx = region_mask[2] >= midline_coord
-        # get_structure_mask_nz(struct_id, ipsi=True) = \
-        #   (region_mask[0][idx], region_mask[1][idx], region_mask[2][idx])
-        # idx = (region_mask[2] < midline_coord)
-        # region_mask_contra_dict[struct_id] = \
-        #   (region_mask[0][idx], region_mask[1][idx], region_mask[2][idx])
         region_nvox[struct_id] = mask_len(get_structure_mask_nz(struct_id))
         region_ipsi_nvox[struct_id] = \
           mask_len(get_structure_mask_nz(struct_id, ipsi=True))
@@ -465,13 +435,9 @@ def generate_voxel_matrices(mcc,
     LIMS_id_list_new = []
     inj_vols = []
     for LIMS_id in LIMS_id_list:
-        inj_mask = injection_mask_dict[LIMS_id]
-        # total_pd = integrate_in_mask(mcc.get_projection_density(LIMS_id)[0], inj_mask)
+        inj_mask = get_injection_mask_nz(LIMS_id, threshold=epsilon)
         total_pd = integrate_in_mask(mcc.get_injection_fraction(LIMS_id)[0],
                                      inj_mask)
-        # total_source_pd = \
-        #   integrate_in_mask(mcc.get_projection_density(LIMS_id)[0],
-        #                     mask_intersection(inj_mask, union_of_source_masks))
         total_source_pd = \
           integrate_in_mask(mcc.get_injection_fraction(LIMS_id)[0],
                             mask_intersection(inj_mask, union_of_source_masks))
@@ -488,12 +454,7 @@ def generate_voxel_matrices(mcc,
         if injection_volume > max_injection_volume:
             print "  Experiment %d has too much injection volume" % LIMS_id
             delete_injection = True
-        if delete_injection:
-            # del ProjD_dict[LIMS_id]
-            del injection_mask_dict[LIMS_id]
-            if source_shell is not None:
-                del injection_mask_dict_shell[LIMS_id]
-        else:
+        if not delete_injection:
             LIMS_id_list_new.append(LIMS_id)
     inj_vols.sort()
     print "Injection volumes: " + str(inj_vols)
@@ -508,6 +469,7 @@ def generate_voxel_matrices(mcc,
     # Fit densities with gaussians if required
     if fit_gaussian:
         warn("gaussian fitting not implemented")
+    # # First pass here:
     #     ProjD_dict_gaussian={}
     #     for curr_id in LIMS_id_list:
     #         pd=ProjD_dict[curr_id]
@@ -546,21 +508,13 @@ def generate_voxel_matrices(mcc,
         ipsi_injection_volume_list = []
         for ii, curr_LIMS_id in enumerate(LIMS_id_list):
             # Get the injection mask:
-            # Below is commented because we don't count the shell voxels
-            # if source_shell is not None:
-            #     curr_experiment_mask=injection_mask_dict_shell[curr_LIMS_id]
-            # else:
-            curr_experiment_mask = injection_mask_dict[curr_LIMS_id]
+            # We don't count the shell voxels
+            curr_experiment_mask = get_injection_mask_nz(curr_LIMS_id,
+                                                         threshold=epsilon)
             # Compute density, source:
             intersection_mask = mask_intersection(curr_experiment_mask, 
                                                   curr_region_mask)
             if mask_len(intersection_mask) > 0:
-                # if fit_gaussian:
-                #     pd_at_intersect=data_in_mask_and_region(
-                #         InjD_dict_gaussian[curr_LIMS_id][0],
-                #         intersection_mask,
-                #         curr_region_mask)
-                # else:
                 indices = source_ipsi_indices[struct_id]
                 ipsi_injection_volume_list.append(mask_len(intersection_mask))
                 col_label_list_source[indices] = struct_id
@@ -573,8 +527,11 @@ def generate_voxel_matrices(mcc,
                       )
                 Omega[ii,indices] = \
                   construct_Omega(
-                      mask_intersection(Omega_mask_dict[curr_LIMS_id],
-                                        curr_region_mask),
+                      mask_intersection(
+                          get_injection_mask_nz(curr_LIMS_id,
+                                                threshold=epsilon,
+                                                shell=source_shell),
+                          curr_region_mask),
                       curr_region_mask
                       )
         
@@ -589,11 +546,6 @@ def generate_voxel_matrices(mcc,
     
     Omega = sp.csc_matrix(Omega)
 
-    # if len(structures_above_threshold_ind_list) < len(sources):
-    #     raise Exception('length of structures_above_threshold_ind_list < sources')
-    # # restrict matrices to the good experiments & structures
-    # above_threshold_indices=
-    # experiment_source_matrix=experiment_source_matrix_pre[:,structures_above_threshold_ind_list]
     experiment_source_matrix = experiment_source_matrix_pre
     row_label_list = np.array(LIMS_id_list)
      
@@ -614,11 +566,10 @@ def generate_voxel_matrices(mcc,
         curr_region_mask_contra = get_structure_mask_nz(struct_id, contra=True)
         for ii, curr_LIMS_id in enumerate(row_label_list):
             # Get the injection mask:
-            if source_shell is not None:
-                curr_experiment_mask = injection_mask_dict_shell[curr_LIMS_id]
-            else:
-                curr_experiment_mask = injection_mask_dict[curr_LIMS_id]
-            # Compute integrated density, target, ipsi:
+            curr_experiment_mask = get_injection_mask_nz(curr_LIMS_id,
+                                                         threshold=epsilon,
+                                                         shell=source_shell)
+            # Compute regional density, target, ipsi:
             difference_mask = \
               mask_difference(curr_region_mask_ipsi,curr_experiment_mask)
             indices_ipsi = target_ipsi_indices[struct_id]
@@ -631,7 +582,7 @@ def generate_voxel_matrices(mcc,
             col_label_list_target_ipsi[indices_ipsi] = struct_id
             voxel_coords_target_ipsi[indices_ipsi,] = \
               np.array(curr_region_mask_ipsi).T
-            # Compute integrated density, target, contra:    
+            # Compute regional density, target, contra:    
             difference_mask = \
               mask_difference(curr_region_mask_contra, curr_experiment_mask)
             indices_contra = target_contra_indices[struct_id]

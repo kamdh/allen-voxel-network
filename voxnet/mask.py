@@ -78,6 +78,7 @@ def shell_mask(mask,radius=1):
 
     neighborhood_size=27
     assert isinstance(radius, int), "radius should be type int"
+    assert radius > 0, "radius should be >= 1"
     voxels=np.array(mask,dtype=int).T
     candidates=np.zeros((voxels.shape[0]*neighborhood_size,3),dtype=int)
     for idx,vox in enumerate(voxels):
