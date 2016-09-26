@@ -41,9 +41,6 @@ Visualizing voxel model
 3. You can visualize the volumetric data in VTK format (.vti files). Use
    [Paraview](http://www.paraview.org/).
 
-#WARNING
-**The code below is currently broken and needs updating from old to new SDK**
-
 Generating a regional model
 ---------------------------
 

@@ -64,7 +64,6 @@ def mask_difference(A, B):
         else:
             xx, yy, zz = zip(*list(new_set))
 
-
     return (np.array(xx), np.array(yy), np.array(zz))
 
 def shell_mask(mask,radius=1):
