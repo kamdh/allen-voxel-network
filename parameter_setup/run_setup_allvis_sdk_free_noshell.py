@@ -1,7 +1,7 @@
 import os
 import numpy as np
 
-save_stem='allvis_sdk_free_noshell_test'
+save_stem='allvis_sdk_free_noshell'
 data_dir='../../data/sdk_new_100'
 resolution=100
 cre=False
@@ -30,3 +30,4 @@ else:
     lambda_fn='lambda_ipsi_contra_opt'
 laplacian='free'
 shuffle_seed=666
+max_injection_volume = np.inf

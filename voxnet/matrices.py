@@ -59,7 +59,7 @@ def construct_Omega(injection_mask, region_mask):
                 irrelevant_indices[ii] = 0
         omega[irrelevant_indices == 1] = 0.0
     else:
-        omega=np.zeros((nvox,))
+        omega = np.zeros((nvox,))
     return omega
 
 # def gaussian_injection(X,Y,allvox):
@@ -213,7 +213,7 @@ def generate_voxel_matrices(mcc,
     assert isinstance(source_shell, int) or (source_shell is None),\
       "source_shell should be int or None"
 
-    ontology = mcc.get_ontology()
+    # ontology = mcc.get_ontology()
     volume_per_voxel = float(mcc.resolution)**3 * 1e-9
 
     if verbose:
@@ -309,7 +309,7 @@ def generate_voxel_matrices(mcc,
     LIMS_id_list = LIMS_id_list_new
     del LIMS_id_list_new
     num_experiments = len(LIMS_id_list)
-    print "Found %d experiments in region" % num_experiments
+    print "Final list includes %d experiments" % num_experiments
     if num_experiments < 1:
         raise Exception("number of filtered experiments is zero")
     print "Final list:\n%s" % str(LIMS_id_list)
@@ -543,7 +543,7 @@ def generate_region_matrices(mcc,
     '''
     from warnings import warn
     
-    ontology = mcc.get_ontology()
+    #ontology = mcc.get_ontology()
 
     if verbose:
         print "Creating experiment list"    
@@ -633,7 +633,7 @@ def generate_region_matrices(mcc,
         for ii, curr_LIMS_id in enumerate(row_label_list):
             # Get the injection mask:
             curr_experiment_mask = \
-              mcc.get_injection_mask_nz(mcc, curr_LIMS_id, shell=source_shell)
+              get_injection_mask_nz(mcc, curr_LIMS_id, shell=source_shell)
             this_PD = mcc.get_projection_density(curr_LIMS_id)[0]
             # Compute integrated density, target, ipsi:
             difference_mask = mask_difference(curr_region_mask_ipsi,

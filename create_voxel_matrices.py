@@ -29,16 +29,25 @@ try:
 except NameError:
     max_injection_volume=np.inf
 
-experiment_dict=generate_voxel_matrices(mcc, sources, targets,
-                                        LIMS_id_list=LIMS_id_list,
-                                        min_voxels_per_injection=min_vox,
-                                        laplacian=laplacian,
-                                        verbose=True,
-                                        source_shell=source_shell,
-                                        source_coverage=source_coverage,
-                                        fit_gaussian=fit_gaussian,
-                                        cre=cre,
-                                        max_injection_volume=max_injection_volume)
+try:
+    if epsilon:
+        pass
+except NameError:
+    epsilon = 0.0
+    
+
+experiment_dict= \
+  generate_voxel_matrices(mcc, sources, targets,
+                          LIMS_id_list=LIMS_id_list,
+                          min_voxels_per_injection=min_vox,
+                          laplacian=laplacian,
+                          verbose=True,
+                          source_shell=source_shell,
+                          source_coverage=source_coverage,
+                          fit_gaussian=fit_gaussian,
+                          cre=cre,
+                          max_injection_volume=max_injection_volume,
+                          epsilon = epsilon)
 experiment_dict['source_acro']=np.array(source_acronyms,dtype=np.object)
 experiment_dict['source_ids']=np.array(sources.id)
 experiment_dict['target_acro']=np.array(target_acronyms,dtype=np.object)

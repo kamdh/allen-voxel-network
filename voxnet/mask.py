@@ -66,7 +66,7 @@ def mask_difference(A, B):
 
     return (np.array(xx), np.array(yy), np.array(zz))
 
-def shell_mask(mask,radius=1):
+def shell_mask(mask, radius=1):
     def unique_rows(a):
         '''
         http://stackoverflow.com/questions/8560440/removing-duplicate-columns-and-rows-from-a-numpy-2d-array
@@ -75,22 +75,21 @@ def shell_mask(mask,radius=1):
         unique_a = np.unique(a.view([('', a.dtype)]*a.shape[1]))
         return unique_a.view(a.dtype).reshape((unique_a.shape[0], a.shape[1]))
 
-    neighborhood_size=27
+    neighborhood_size = 27
     assert isinstance(radius, int), "radius should be type int"
     assert radius > 0, "radius should be >= 1"
-    voxels=np.array(mask,dtype=int).T
-    candidates=np.zeros((voxels.shape[0]*neighborhood_size,3),dtype=int)
+    voxels = np.array(mask,dtype=int).T
+    candidates = np.zeros((voxels.shape[0]*neighborhood_size,3),dtype=int)
     for idx,vox in enumerate(voxels):
-        neighbors=possible_neighbors(vox,size=neighborhood_size-1)
-        candidates[neighborhood_size*idx:neighborhood_size*(idx+1),:]=\
+        neighbors = possible_neighbors(vox,size=neighborhood_size-1)
+        candidates[neighborhood_size*idx:neighborhood_size*(idx+1),:] = \
           np.vstack((neighbors,vox.reshape((1,3))))
-    shell_voxels=unique_rows(candidates)
-    #new_mask=np.array(shell_voxels) #[:,0],shell_voxels[:,1],shell_voxels[:,2])
-    new_mask=tuple([col for col in shell_voxels.T])
-    if radius==1:
+    shell_voxels = unique_rows(candidates)
+    new_mask = tuple([col for col in shell_voxels.T])
+    if radius == 1:
         return new_mask
     else:
-        return shell_mask(new_mask,radius=radius-1)
+        return shell_mask(new_mask, radius = (radius-1))
 
 def possible_neighbors(vox,size=6):
     '''
