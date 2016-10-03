@@ -3,7 +3,7 @@ import numpy as np
 import glob
 from voxnet.utilities import absjoin, h5read
 from scipy.io import mmread
-from loss_fun import *
+from voxnet.lossfun import *
 
 # setup the run
 param_fn='run_setup.py'
