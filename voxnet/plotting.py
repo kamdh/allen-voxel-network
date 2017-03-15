@@ -105,44 +105,56 @@ def build_injection_vectors(voxel_coords,coord_vox_map,
     inj_center=inj_center[:,0:num]
     return Xvirt,inj_center
 
-def map_to_regular_grid(x,voxel_coords):
+def map_to_regular_grid(x, voxel_coords, bbox=None):
     '''
     Map a voxel vector into a regular grid in the bounding box.
 
     Parameters
     ----------
-    x : ndarray (N x 1)
+    x : ndarray (N x 1 or N x 2) 
     voxel_coords : ndarray (N x 3)
+    bbox : list, default = None
+      Length 3 list of bounding box coords to map into
 
     Returns
     -------
     Y 
     '''
+    ## check input
+    if bbox is not None:
+        assert type(bbox) is list, \
+          "bbox should be list"
+        assert len(bbox) == 3, \
+          "bbox length should be 3"
     assert voxel_coords.shape[0] == x.shape[0], \
       "x and voxel_coords should have same first dimension"
     assert voxel_coords.shape[1] == 3,\
       "voxel_coords should be (N x 3)"
-    min_box,max_box=bounding_box(voxel_coords)
-    base_shape=shape_regular_grid(voxel_coords)
-    if x.ndim==2:
-        dims=list(base_shape)
-        num_virt=x.shape[1]
-        dims.append(num_virt)
-        Y=np.zeros(dims)
+    ## compute bounding box if necessary
+    if bbox is None:
+        min_box, max_box = bounding_box(voxel_coords)
+        bbox = shape_regular_grid(voxel_coords)
+    else:
+        min_box = [0, 0, 0]
+        max_box = bbox
+    if x.ndim == 2:
+        # assume 2nd dim holds multiple vectors
+        num_virt = x.shape[1]
+        Y = np.zeros(list(bbox).append(num_virt))
         for inj in range(num_virt):
-            Y[:,:,:,inj]=map_to_regular_grid(x[:,inj],voxel_coords)
-    elif x.ndim==1:
-        Y=np.zeros(base_shape)
-        for index,value in enumerate(x):
-            new_index=voxel_coords[index]-min_box
-            Y[new_index[0],new_index[1],new_index[2]]=value
+            Y[:,:,:,inj] = map_to_regular_grid(x[:,inj], voxel_coords, bbox)
+    elif x.ndim == 1:
+        Y = np.zeros(bbox)
+        for index, value in enumerate(x):
+            new_index = voxel_coords[index] - min_box
+            Y[new_index[0],new_index[1],new_index[2]] = value
     else:
         raise Exception('can only map 1 or 2 dimensional arrays to a grid')
     return(Y)
         
 def shape_regular_grid(voxel_coords):
-    min_box,max_box=bounding_box(voxel_coords)
-    dims=max_box-min_box+1
+    min_box, max_box = bounding_box(voxel_coords)
+    dims = max_box - min_box+1
     return dims
 
 def save_as_csv(fn,Xvirt_grid,Yvirt_grid,

@@ -16,11 +16,12 @@ inj_site='VISp' # for virtual injections
 inj_radius=1 # units of voxels
 inj_stride=2
 int_axis=1
+plot_type = 'low_rank'
 #save_stem='allvis_sdk_free_noshell'
 save_stem='extra_vis_friday_harbor'
 contour_list=[425,533,402]
-lambda_str = '1e6'
-output_dir='integrated_gaussian_%s' % lambda_str
+lambda_str = '10'
+output_dir='integrated_gaussian_%s_norm' % lambda_str
 do_int_plots=True
 base_dir=os.path.join('../connectivities',save_stem)
 fn_matrices=os.path.join(base_dir, save_stem + '.mat')
@@ -40,20 +41,26 @@ select_colors=["myred", "mygreen", "myblue", "myred", "mygreen","myblue"]
 #############
 
 print "Making plots for " + save_stem
+print output_dir
 
 ## Load data
 
 mat=loadmat(fn_matrices)
 locals().update(mat)
 
-X=h5read(os.path.join(base_dir, save_stem + '_X.h5'))
+#X=h5read(os.path.join(base_dir, save_stem + '_X.h5'))
+X=h5read(os.path.join(base_dir, save_stem + '_X_norm_by_Y.h5'))
 #X=mmread(os.path.join(base_dir, save_stem + '_X.mtx'))
 
-Y_ipsi=h5read(os.path.join(base_dir, save_stem + '_Y_ipsi.h5'))
+#Y_ipsi=h5read(os.path.join(base_dir, save_stem + '_Y_ipsi.h5'))
+Y_ipsi=h5read(os.path.join(base_dir, save_stem + '_Y_norm_by_Y.h5'))
 #Y_ipsi=mmread(os.path.join(base_dir, save_stem + '_Y_ipsi.mtx'))
 
-W_ipsi=h5read(os.path.join(base_dir, 'W_ipsi_%s.h5' % lambda_str))
-#W_ipsi=h5read(os.path.join(base_dir, 'W_lowrank_res.h5'));
+#W_ipsi=h5read(os.path.join(base_dir, 'W_ipsi_%s.h5' % lambda_str)) # antero
+#W_ipsi=h5read(os.path.join(base_dir, 'W_ipsi_%s.h5' % lambda_str)).T # retro
+#W_ipsi=h5read(os.path.join(base_dir, 'W_low_rank_res_160.h5')) # residual
+#W_ipsi=h5read(os.path.join(base_dir, 'W_low_rank_160.h5')) # low rank
+W_ipsi=h5read(os.path.join(base_dir, 'W_norm_ipsi_10.h5')) # normalized
 
 print "W dims: %d x %d" % (W_ipsi.shape[0], W_ipsi.shape[1])
 print "Data all loaded"
@@ -137,12 +144,12 @@ if num_virt < 1:
 Yvirt_ipsi=np.dot(W_ipsi,Xvirt)
 
 ## Map to 3d grid
-Xvirt_grid=map_to_regular_grid(Xvirt,voxel_coords_source)
-Yvirt_ipsi_grid=map_to_regular_grid(Yvirt_ipsi,voxel_coords_target_ipsi)
-Xreal_grid=map_to_regular_grid(X,voxel_coords_source)
-Yreal_ipsi_grid=map_to_regular_grid(Y_ipsi,voxel_coords_target_ipsi)
-Xvirt_int_grid=np.sum(Xvirt_grid,axis=int_axis)
-Yvirt_ipsi_int_grid=np.sum(Yvirt_ipsi_grid,axis=int_axis)
+Xvirt_grid          = map_to_regular_grid(Xvirt,voxel_coords_source)
+Yvirt_ipsi_grid     = map_to_regular_grid(Yvirt_ipsi,voxel_coords_target_ipsi)
+Xreal_grid          = map_to_regular_grid(X,voxel_coords_source)
+Yreal_ipsi_grid     = map_to_regular_grid(Y_ipsi,voxel_coords_target_ipsi)
+Xvirt_int_grid      = np.sum(Xvirt_grid,axis=int_axis)
+Yvirt_ipsi_int_grid = np.sum(Yvirt_ipsi_grid,axis=int_axis)
 
 ## Save VTKs --- volumetric data
 print "Saving VTKs"
@@ -173,8 +180,10 @@ if do_int_plots:
     for inj in range(num_virt):
         y_inj=inj_centers[1,inj]
         fig,ax=plt.subplots()
+        # Reds: linear colormap for connectivities
         plot_integrated(fig, ax, inj, 'Reds', 'Blues',
                         Xvirt_int_grid,Yvirt_ipsi_int_grid)
+        # PuOr: diverging colormap for resids
         # plot_integrated(fig,ax,inj,'PuOr','Blues',
         #                 Xvirt_int_grid,Yvirt_ipsi_int_grid)
         plt.tick_params(axis='both', which='both', bottom='off',

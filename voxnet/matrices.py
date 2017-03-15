@@ -666,3 +666,42 @@ def generate_region_matrices(mcc,
       np.zeros(experiment_source_matrix.shape[1],
                experiment_target_matrix_contra.shape[1])
     return experiment_dict
+
+def normalize_data(X, Y, by='Y', norm=np.linalg.norm):
+    '''
+    Normalize the data matrices X and Y experiment-by-experiment.
+    This is equivalent to gaussian multiplicative noise.
+
+    Parameters
+    ----------
+      X : np.ndarray (n_x, n_inj)
+        Injection signal
+      Y : np.ndarray (n_y, n_inj)
+        Projection signal
+      by : string, default = 'Y'
+        Which signal to normalize by
+      norm : function, default = np.linalg.norm
+        Norm to use for normalization. The default is equivalent to scaling
+        the standard deviation by ||Y||_2.
+
+    Returns
+    -------
+      X_norm, Y_norm
+        Normalized signals
+    '''
+    assert np.all(X.shape[1] == Y.shape[1]), 'X and Y unequal shapes'
+    X_norm = X.copy()
+    Y_norm = Y.copy()
+    if by == 'Y':
+        for i in range(Y_norm.shape[1]):
+            norm_inj = norm(Y_norm[:,i])
+            Y_norm[:,i] /= norm_inj
+            X_norm[:,i] /= norm_inj
+    elif by == 'X':
+        for i in range(Y_norm.shape[1]):
+            norm_inj = norm(X_norm[:,i])
+            Y_norm[:,i] /= norm_inj
+            X_norm[:,i] /= norm_inj
+    else:
+        raise Exception('incorrect argument ''by'' should be Y, X, or None')
+    return (X_norm, Y_norm)

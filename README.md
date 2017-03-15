@@ -9,6 +9,7 @@ Requirements:
 * scipy
 * h5py
 * allensdk
+* skimage, mayavi (optional, for visualization)
 
 To fit connectomes:
 * [spatial-network-regression](https://github.com/kharris/spatial-network-regression)
