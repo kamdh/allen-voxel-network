@@ -146,7 +146,7 @@ def map_to_regular_grid(x, voxel_coords, bbox=None):
     elif x.ndim == 1:
         Y = np.zeros(bbox)
         for index, value in enumerate(x):
-            new_index = voxel_coords[index] - min_box
+            new_index = (voxel_coords[index] - min_box).astype(int)
             Y[new_index[0],new_index[1],new_index[2]] = value
     else:
         raise Exception('can only map 1 or 2 dimensional arrays to a grid')
