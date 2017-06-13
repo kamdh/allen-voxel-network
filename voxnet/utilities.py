@@ -198,6 +198,3 @@ def get_injection_mask_nz(mcc, expt_id, threshold=0.,
     if shell is not None:
         mask_nz = shell_mask(mask_nz, radius=shell)
     return mask_nz
-
-def mask_len(mask):
-    return len(mask[0])

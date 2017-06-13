@@ -4,13 +4,24 @@ import numpy as np
 import h5py
 import time
 import nrrd
-from voxnet.conn2d import map_to_surface
+from scipy.io import mmwrite
+from voxnet.conn2d import *
 
 drive_path = os.path.join(os.getenv('HOME'), 'work/allen/data/sdk_new_100')
+output_dir = os.path.join(os.getenv('HOME'), 'work/allen/data/2d_test')
 
 # When downloading 3D connectivity data volumes, what resolution do you want (in microns)?  
 # Options are: 10, 25, 50, 100
 resolution_um=10
+
+# Downsampling factor
+stride = 4
+
+# Omega threshold
+Omega_thresh = 0.5
+
+# Volume error thresh, in percent
+volume_fraction = 20
 
 # The manifest file is a simple JSON file that keeps track of all of
 # the data that has already been downloaded onto the hard drives.
@@ -31,6 +42,9 @@ experiments = mcc.get_experiments(dataframe = True,
                                   cre = False)
 print "%d total experiments" % len(experiments)
 
+
+
+## Laplacians
 view_paths_fn = os.path.join(os.getenv('HOME'), 'work/allen/data/TopView/top_view_paths_10.h5')
 view_paths_file = h5py.File(view_paths_fn, 'r')
 view_lut = view_paths_file['view lookup'][:]
@@ -46,46 +60,61 @@ for curr_ind in ind:
     curr_path = view_paths[curr_path_id, :]
     norm_lut[curr_ind] = np.sum(curr_path > 0)
 
-t0 = time.time()
+view_lut = downsample(view_lut, stride)
+data_mask = np.where(view_lut != -1)
+# Right indices
+right = np.zeros(view_lut.shape, dtype=bool)
+right[:, int(view_lut.shape[1]/2):] = True
+# Right hemisphere data
+hemi_R_mask = np.where(np.logical_and(view_lut != -1, right))
+# Left hemisphere data
+hemi_L_mask = np.where(np.logical_and(view_lut != -1, np.logical_not(right)))
+
+nx = len(hemi_R_mask[0])
+ny = len(data_mask[0])
+Lx = laplacian_2d(hemi_R_mask)
+Ly = laplacian_2d(data_mask)
+mmwrite(os.path.join(output_dir, "Lx.mtx"), Lx)
+mmwrite(os.path.join(output_dir, "Ly.mtx"), Ly)
+
+X = np.zeros((nx, len(experiments)))
+Y = np.zeros((ny, len(experiments)))
+Omega = np.zeros((ny, len(experiments)))
 expt_drop_list = []
+t0 = time.time()
 #eid = experiments.iloc[5].id
 #row = experiments.iloc[5]
+index = 0
 for eid, row in experiments.iterrows():
-    print "\nProcessing experiment %d" % eid
+    print "\nRow %d\nProcessing experiment %d" % (index,eid)
     print row
     data_dir = os.path.join(os.getenv('HOME'),
                             "work/allen/data/sdk_new_100/experiment_%d/" % eid)
     # get and remap injection data
-    print "getting injection density"
-    in_d, in_info = mcc.get_injection_density(eid)
-    print "mapping to surface"
-    in_d_s = map_to_surface(in_d, view_lut, view_paths, scale = resolution_um/10., fun=np.mean)
     in_fn = data_dir + "injection_density_top_view_%d.nrrd" % int(resolution_um)
-    print "writing " + in_fn
-    nrrd.write(in_fn, in_d_s)
+    print "reading " + in_fn
+    in_d_s_full = nrrd.read(in_fn)[0]
+    flat_vol = np.nansum(in_d_s_full * norm_lut) * (10./1000.)**3
+    expt_union = mcc.get_experiment_structure_unionizes(eid, hemisphere_ids = [3], is_injection = True,
+                                                        structure_ids = [ontology['grey']['id'].values[0]])
+    full_vol = float(expt_union['projection_volume'])
+    in_d_s = downsample(in_d_s_full, stride)
     # get and remap projection data
-    print "getting projection density"
-    pr_d, pr_info = mcc.get_projection_density(eid)
-    print "mapping to surface"
-    pr_d_s = map_to_surface(pr_d, view_lut, view_paths, scale = resolution_um/10., fun=np.mean)
     pr_fn = data_dir + "projection_density_top_view_%d.nrrd" % int(resolution_um)
-    print "writing " + pr_fn
-    nrrd.write(pr_fn, pr_d_s)
-
+    print "reading " + pr_fn
+    pr_d_s = downsample(nrrd.read(pr_fn)[0], stride)
+    # fill matrices
+    X[:, index] = in_d_s[hemi_R_mask]
+    Y[:, index] = pr_d_s[data_mask]
+    this_Omega = (in_d_s[data_mask] > Omega_thresh).astype(int)
+    Omega[:, index] = this_Omega
+    # drop experiments without much injection volume
+    if np.abs(flat_vol - full_vol) / full_vol * 100 > volume_fraction:
+        print "warning, dropping experiment"
+        print "flat_vol = %f\nfull_vol = %f" % (flat_vol, full_vol)
+        expt_drop_list.append(index)
+    index += 1
 t1 = time.time()
 total = t1-t0
 print "%0.1f minutes elapsed" % (total/60.)
 
-
-import matplotlib.pyplot as plt
-plt.ion()
-
-fig = plt.figure(figsize = (10,10))
-ax = fig.add_subplot(121)
-h = ax.imshow(in_d_s)
-#fig.colorbar(h)
-
-#fig2 = plt.figure(figsize = (10,10))
-ax2 = fig.add_subplot(122)
-h2 = ax2.imshow(pr_d_s)
-#fig2.colorbar(h2)

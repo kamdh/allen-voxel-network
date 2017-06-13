@@ -2,7 +2,7 @@ from .utilities import *
 from .mask import *
 import numpy as np
 
-def region_laplacian(mask):
+def region_laplacian(mask, d = 3):
     '''
     Generate the laplacian matrix for a given region's voxels. This is the 
     graph laplacian of the neighborhood graph.

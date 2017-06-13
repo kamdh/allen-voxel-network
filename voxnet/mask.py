@@ -1,5 +1,8 @@
 import numpy as np
 
+def mask_len(mask):
+    return len(mask[0])
+
 def mask_union(*masks):
     ''' Find the union of all of the nonzero voxels given an input list of masks. '''
     masks = [ m for m in masks if len(m[0]) > 0 ]
@@ -91,7 +94,7 @@ def shell_mask(mask, radius=1):
     else:
         return shell_mask(new_mask, radius = (radius-1))
 
-def possible_neighbors(vox,size=6):
+def possible_neighbors(vox, size=6):
     '''
     Parameters
     ----------
@@ -103,7 +106,7 @@ def possible_neighbors(vox,size=6):
       size : int
         6 or 26, size of neighborhood to return
     '''
-    if size==6:
+        if size==6:
         neighbors=np.tile(vox,(6,1))
         neighbors+=[[1,0,0],
                     [0,1,0],
