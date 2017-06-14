@@ -100,9 +100,10 @@ print "full vols: " + str(full_vols)
 print "drop list: " + str(expt_drop_list)
 
 savemat(os.path.join(output_dir, 'volumes.mat'),
-        { 'flat_vols': flat_vols, 'full_vols': full_vols,
-          'drop_list': expt_drop_list,
-          'experiment_ids': np.array(experiments['id']) } )
+        {'flat_vols': flat_vols, 'full_vols': full_vols,
+         'drop_list': expt_drop_list,
+         'experiment_ids': np.array(experiments['id'])},
+        oned_as='column', do_compression=True))
 
 
 # import matplotlib.pyplot as plt

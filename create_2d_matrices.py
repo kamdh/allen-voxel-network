@@ -6,6 +6,9 @@ import time
 import nrrd
 from scipy.io import mmwrite
 from voxnet.conn2d import *
+from voxnet.utilities import h5write
+import scipy.sparse as sp
+from scipy.io import savemat
 
 drive_path = os.path.join(os.getenv('HOME'), 'work/allen/data/sdk_new_100')
 output_dir = os.path.join(os.getenv('HOME'), 'work/allen/data/2d_test')
@@ -19,10 +22,7 @@ resolution_um=10
 stride = 4
 
 # Omega threshold
-Omega_thresh = 0.5
-
-# Volume error thresh, in percent
-volume_fraction = 20
+Omega_thresh = 0.40
 
 # The manifest file is a simple JSON file that keeps track of all of
 # the data that has already been downloaded onto the hard drives.
@@ -104,3 +104,16 @@ t1 = time.time()
 total = t1 - t0
 print "%0.1f minutes elapsed" % (total/60.)
 
+# Save Matrices
+voxel_coords_source = np.array(hemi_R_mask).T
+voxel_coords_target = np.array(data_mask).T
+Omega = sp.csc_matrix(Omega)
+h5write(os.path.join(output_dir, "X.h5"), X)
+h5write(os.path.join(output_dir, "Y.h5"), Y)
+mmwrite(os.path.join(output_dir, "Omega.mtx"), Omega)
+savemat(os.path.join(output_dir, 'matrices.mat'),
+        {'X': X, 'Y': Y, 'Lx': Lx, 'Ly': Ly, 'Omega': Omega,
+         'voxel_coords_source': voxel_coords_source,
+         'voxel_coords_target': voxel_coords_target,
+         'view_lut': view_lut, 'stride': stride, 'Omega_thresh': Omega_thresh},
+        oned_as='column', do_compression=True)

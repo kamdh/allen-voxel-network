@@ -58,7 +58,7 @@ try:
 except OSError:
     pass
 save_file_name=os.path.join(save_dir,save_stem + '.mat')
-savemat(save_file_name,experiment_dict,oned_as='column',do_compression=True)
+savemat(save_file_name, experiment_dict, oned_as='column', do_compression=True)
 
 if save_mtx:
     # only save X, Y, Lx, Ly
