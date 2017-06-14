@@ -2,7 +2,8 @@ import numpy as np
 
 def map_to_surface(im, lut, paths, scale = 1, fun = np.max, set_nan = True):
     '''
-    maps a gridded voxel image onto the cortical surface
+    Maps a gridded voxel image onto the cortical surface using a lookup
+    table and paths.
     '''
     scale = float(scale)
     old_dims = im.shape
