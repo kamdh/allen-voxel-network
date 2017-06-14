@@ -26,6 +26,7 @@ def map_to_surface(im, lut, paths, scale = 1, fun = np.max, set_nan = True):
     for curr_ind in ind:
         curr_path_id = lut[curr_ind]
         curr_path = paths[curr_path_id, :]
+        curr_path = curr_path[curr_path != 0] # need to ignore zeros
         if scale != 1:
             curr_path_rescale = remap_coord(curr_path)
         else:
