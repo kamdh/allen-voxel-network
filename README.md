@@ -54,3 +54,9 @@ run:
 If you want to compare the output of this model to that from Oh et al. (2014),
 this can be accomplished with `compare_new_old.py`.
 
+Flat cortex 2-D connectivity
+----------------------------
+Run in this order:
+
+    get_2d_connectivity.py
+    create_2d_matrices.py
