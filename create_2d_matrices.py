@@ -1,3 +1,10 @@
+'''
+create_2d_matrices.py
+
+Takes 2d flattened data and forms it into matrices for use in the regression
+problem.
+'''
+
 import os
 from allensdk.core.mouse_connectivity_cache import MouseConnectivityCache
 import numpy as np

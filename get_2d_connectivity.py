@@ -1,3 +1,9 @@
+'''
+get_2d_connectivity.py
+
+Fetches connectivity data and maps it into 2d, saving the results.
+'''
+
 import os
 from allensdk.core.mouse_connectivity_cache import MouseConnectivityCache
 import numpy as np
