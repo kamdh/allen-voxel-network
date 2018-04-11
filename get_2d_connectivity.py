@@ -21,6 +21,8 @@ output_dir = os.path.join(os.getenv('HOME'), 'work/allen/data/2d_test_flatmap')
 #                              'work/allen/data/TopView/top_view_paths_10.h5')
 view_paths_fn = os.path.join(os.getenv('HOME'),
                        'work/allen/data/ccf_2017/dorsal_flatmap_paths_10.h5')
+# no_data = -1
+no_data = 0
 
 # When downloading 3D connectivity data volumes, what resolution do you want
 # (in microns)?  
@@ -28,7 +30,7 @@ view_paths_fn = os.path.join(os.getenv('HOME'),
 resolution_um = 10
 
 # Drop list criterion, in percent difference
-volume_fraction = 20
+volume_fraction = 30
 
 # The manifest file is a simple JSON file that keeps track of all of
 # the data that has already been downloaded onto the hard drives.
@@ -57,12 +59,12 @@ view_paths_file.close()
 
 # Compute size of each path to convert path averages to sums
 norm_lut = np.zeros(view_lut.shape, dtype=int)
-ind = np.where(view_lut != -1)
+ind = np.where(view_lut != no_data)
 ind = zip(ind[0], ind[1])
 for curr_ind in ind:
     curr_path_id = view_lut[curr_ind]
     curr_path = view_paths[curr_path_id, :]
-    norm_lut[curr_ind] = np.sum(curr_path > 0)
+    norm_lut[curr_ind] = np.sum(curr_path != no_data)
 
 t0 = time.time()
 expt_drop_list = []
@@ -80,7 +82,8 @@ for eid, row in experiments.iterrows():
     in_d, in_info = mcc.get_injection_density(eid)
     print "mapping to surface"
     in_d_s = map_to_surface(in_d, view_lut, view_paths,
-                            scale=resolution_um/10., fun=np.mean)
+                            scale=resolution_um/10., fun=np.mean,
+                            no_data=no_data)
     flat_vol = np.nansum(in_d_s * norm_lut) * (10./1000.)**3
     flat_vols.append(flat_vol)
     full_vol = np.nansum(in_d) * (10./1000.)**3
@@ -99,7 +102,8 @@ for eid, row in experiments.iterrows():
     pr_d, pr_info = mcc.get_projection_density(eid)
     print "mapping to surface"
     pr_d_s = map_to_surface(pr_d, view_lut, view_paths,
-                            scale=resolution_um/10., fun=np.mean)
+                            scale=resolution_um/10., fun=np.mean,
+                            no_data=no_data)
     pr_fn = data_dir + "projection_density_" + view_str + "_%d.nrrd" \
       % int(resolution_um)
     print "writing " + pr_fn

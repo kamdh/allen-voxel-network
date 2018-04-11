@@ -1,13 +1,14 @@
 import numpy as np
 
-def map_to_surface(im, lut, paths, scale = 1, fun = np.max, set_nan = True):
+def map_to_surface(im, lut, paths, scale = 1, fun = np.max,
+                   set_nan = True, no_data = -1):
     '''
     Maps a gridded voxel image onto the cortical surface using a lookup
     table and paths.
     '''
     scale = float(scale)
     old_dims = im.shape
-    new_dims = (1320, 800, 1140) # hard-coded
+    new_dims = (1320, 800, 1140) # hard-coded 10-micron CCF size
     for i, dim in enumerate(new_dims):
         assert np.floor(old_dims[i] * scale).astype(int) == dim, \
             "dimension mismatch"
@@ -22,7 +23,7 @@ def map_to_surface(im, lut, paths, scale = 1, fun = np.max, set_nan = True):
     # calculate output array
     output_pd = np.zeros(lut.shape, dtype=im.dtype)    
     # all pixels in surface view with a stream line
-    ind = np.where(lut > -1)
+    ind = np.where(lut != no_data)
     ind = zip(ind[0], ind[1])
     for curr_ind in ind:
         curr_path_id = lut[curr_ind]
@@ -46,7 +47,7 @@ def map_to_surface(im, lut, paths, scale = 1, fun = np.max, set_nan = True):
         #    print value
         #    break
     if set_nan:
-        output_pd[lut == -1] = np.nan
+        output_pd[lut == no_data] = np.nan
     return output_pd
 
 def downsample(arr, stride):
