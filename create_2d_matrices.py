@@ -18,7 +18,12 @@ import scipy.sparse as sp
 from scipy.io import savemat
 
 drive_path = os.path.join(os.getenv('HOME'), 'work/allen/data/sdk_new_100')
-output_dir = os.path.join(os.getenv('HOME'), 'work/allen/data/2d_test')
+#output_dir = os.path.join(os.getenv('HOME'), 'work/allen/data/2d_test')
+output_dir = os.path.join(os.getenv('HOME'), 'work/allen/data/2d_test_flatmap')
+# view_paths_fn = os.path.join(os.getenv('HOME'),
+#                              'work/allen/data/TopView/top_view_paths_10.h5')
+view_paths_fn = os.path.join(os.getenv('HOME'),
+                       'work/allen/data/ccf_2017/dorsal_flatmap_paths_10.h5')
 
 # When downloading 3D connectivity data volumes, what resolution do you want
 # (in microns)?  
@@ -52,8 +57,6 @@ experiments = mcc.get_experiments(dataframe=True,
 print "%d total experiments" % len(experiments)
 
 # Load look up tables
-view_paths_fn = os.path.join(os.getenv('HOME'),
-                             'work/allen/data/TopView/top_view_paths_10.h5')
 view_paths_file = h5py.File(view_paths_fn, 'r')
 view_lut = view_paths_file['view lookup'][:]
 view_paths = view_paths_file['paths'][:]

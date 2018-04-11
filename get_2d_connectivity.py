@@ -11,9 +11,15 @@ import h5py
 import time
 import nrrd
 from voxnet.conn2d import map_to_surface
+from scipy.io import savemat
 
 drive_path = os.path.join(os.getenv('HOME'), 'work/allen/data/sdk_new_100')
-output_dir = os.path.join(os.getenv('HOME'), 'work/allen/data/2d_test')
+#output_dir = os.path.join(os.getenv('HOME'), 'work/allen/data/2d_test')
+output_dir = os.path.join(os.getenv('HOME'), 'work/allen/data/2d_test_flatmap')
+# view_paths_fn = os.path.join(os.getenv('HOME'),
+#                              'work/allen/data/TopView/top_view_paths_10.h5')
+view_paths_fn = os.path.join(os.getenv('HOME'),
+                       'work/allen/data/ccf_2017/dorsal_flatmap_paths_10.h5')
 
 # When downloading 3D connectivity data volumes, what resolution do you want
 # (in microns)?  
@@ -43,8 +49,6 @@ experiments = mcc.get_experiments(dataframe=True,
                                   cre=False)
 print "%d total experiments" % len(experiments)
 
-view_paths_fn = os.path.join(os.getenv('HOME'),
-                             'work/allen/data/TopView/top_view_paths_10.h5')
 view_paths_file = h5py.File(view_paths_fn, 'r')
 view_lut = view_paths_file['view lookup'][:]
 view_paths = view_paths_file['paths'][:]
@@ -85,7 +89,7 @@ for eid, row in experiments.iterrows():
     if np.abs(flat_vol - full_vol) / full_vol * 100 > volume_fraction:
         print "warning, placing experiment in drop list"
         expt_drop_list.append(eid)
-    in_fn = data_dir + "injection_density_top_view_%d.nrrd" % int(resolution_um)
+    in_fn = data_dir + "injection_density_flatmap_%d.nrrd" % int(resolution_um)
     print "writing " + in_fn
     nrrd.write(in_fn, in_d_s)
     # get and remap projection data
@@ -94,7 +98,7 @@ for eid, row in experiments.iterrows():
     print "mapping to surface"
     pr_d_s = map_to_surface(pr_d, view_lut, view_paths,
                             scale=resolution_um/10., fun=np.mean)
-    pr_fn = data_dir + "projection_density_top_view_%d.nrrd" % int(resolution_um)
+    pr_fn = data_dir + "projection_density_flatmap_%d.nrrd" % int(resolution_um)
     print "writing " + pr_fn
     nrrd.write(pr_fn, pr_d_s)
 
@@ -109,7 +113,7 @@ savemat(os.path.join(output_dir, 'volumes.mat'),
         {'flat_vols': flat_vols, 'full_vols': full_vols,
          'drop_list': expt_drop_list,
          'experiment_ids': np.array(experiments['id'])},
-        oned_as='column', do_compression=True))
+        oned_as='column', do_compression=True)
 
 
 # import matplotlib.pyplot as plt
