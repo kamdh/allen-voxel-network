@@ -13,6 +13,7 @@ import nrrd
 from voxnet.conn2d import map_to_surface
 from scipy.io import savemat
 
+view_str = 'flatmap'
 drive_path = os.path.join(os.getenv('HOME'), 'work/allen/data/sdk_new_100')
 #output_dir = os.path.join(os.getenv('HOME'), 'work/allen/data/2d_test')
 output_dir = os.path.join(os.getenv('HOME'), 'work/allen/data/2d_test_flatmap')
@@ -89,7 +90,8 @@ for eid, row in experiments.iterrows():
     if np.abs(flat_vol - full_vol) / full_vol * 100 > volume_fraction:
         print "warning, placing experiment in drop list"
         expt_drop_list.append(eid)
-    in_fn = data_dir + "injection_density_flatmap_%d.nrrd" % int(resolution_um)
+    in_fn = data_dir + "injection_density_" + view_str + "_%d.nrrd" \
+      % int(resolution_um)
     print "writing " + in_fn
     nrrd.write(in_fn, in_d_s)
     # get and remap projection data
@@ -98,7 +100,8 @@ for eid, row in experiments.iterrows():
     print "mapping to surface"
     pr_d_s = map_to_surface(pr_d, view_lut, view_paths,
                             scale=resolution_um/10., fun=np.mean)
-    pr_fn = data_dir + "projection_density_flatmap_%d.nrrd" % int(resolution_um)
+    pr_fn = data_dir + "projection_density_" + view_str + "_%d.nrrd" \
+      % int(resolution_um)
     print "writing " + pr_fn
     nrrd.write(pr_fn, pr_d_s)
 

@@ -17,11 +17,14 @@ from voxnet.utilities import h5write
 import scipy.sparse as sp
 from scipy.io import savemat
 
+view_str = 'flatmap'
 drive_path = os.path.join(os.getenv('HOME'), 'work/allen/data/sdk_new_100')
 #output_dir = os.path.join(os.getenv('HOME'), 'work/allen/data/2d_test')
 output_dir = os.path.join(os.getenv('HOME'), 'work/allen/data/2d_test_flatmap')
 # view_paths_fn = os.path.join(os.getenv('HOME'),
 #                              'work/allen/data/TopView/top_view_paths_10.h5')
+# no_data = -1
+no_data = 0
 view_paths_fn = os.path.join(os.getenv('HOME'),
                        'work/allen/data/ccf_2017/dorsal_flatmap_paths_10.h5')
 
@@ -64,14 +67,15 @@ view_paths_file.close()
 
 # Compute masks
 view_lut = downsample(view_lut, stride)
-data_mask = np.where(view_lut != -1)
+data_mask = np.where(view_lut != no_data)
 # Right indices
 right = np.zeros(view_lut.shape, dtype=bool)
 right[:, int(view_lut.shape[1]/2):] = True
 # Right hemisphere data
-hemi_R_mask = np.where(np.logical_and(view_lut != -1, right))
+hemi_R_mask = np.where(np.logical_and(view_lut != no_data, right))
 # Left hemisphere data
-hemi_L_mask = np.where(np.logical_and(view_lut != -1, np.logical_not(right)))
+hemi_L_mask = np.where(np.logical_and(view_lut != no_data,
+                                      np.logical_not(right)))
 
 # Laplacians
 Lx = laplacian_2d(hemi_R_mask)
@@ -96,11 +100,13 @@ for eid, row in experiments.iterrows():
     data_dir = os.path.join(os.getenv('HOME'),
                             "work/allen/data/sdk_new_100/experiment_%d/" % eid)
     # get and remap injection data
-    in_fn = data_dir + "injection_density_top_view_%d.nrrd" % int(resolution_um)
+    in_fn = data_dir + "injection_density_" + view_str + "_%d.nrrd" \
+      % int(resolution_um)
     print "reading " + in_fn
     in_d_s = downsample(nrrd.read(in_fn)[0], stride)
     # get and remap projection data
-    pr_fn = data_dir + "projection_density_top_view_%d.nrrd" % int(resolution_um)
+    pr_fn = data_dir + "projection_density_" + view_str + "_%d.nrrd" \
+      % int(resolution_um)
     print "reading " + pr_fn
     pr_d_s = downsample(nrrd.read(pr_fn)[0], stride)
     # fill matrices
