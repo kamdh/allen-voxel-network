@@ -60,3 +60,6 @@ Run in this order:
 
     get_2d_connectivity.py
     create_2d_matrices.py
+
+Note that the streamlines needed to generate top view and flatmap 2-D cortical
+projections are available from [CCF 2017 informatics](http://download.alleninstitute.org/informatics-archive/current-release/mouse_ccf/cortical_coordinates/ccf_2017/).
