@@ -8,7 +8,7 @@ Requirements:
 * numpy
 * scipy
 * h5py
-* allensdk
+* allensdk (tested with 0.13.1, NOT guaranteed to work with later versions)
 * skimage, mayavi (optional, for visualization)
 
 To fit connectomes:
